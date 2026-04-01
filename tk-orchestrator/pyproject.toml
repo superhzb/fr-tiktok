@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tk-orchestrator"
+version = "0.1.0"
+description = "CLI orchestrator for the TikTok video processing pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "tk-stt",
+    "tk-punctuation",
+    "tk-aligner",
+    "tk-srt-merger",
+    "tk-srt-translate",
+    "tk-down",
+    "tk-channel-checker",
+    "tk-comment-checker",
+    "click",
+]
+
+[project.scripts]
+tk-orch = "tk_orchestrator.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tk_orchestrator"]
+
+# Local editable installs for development
+# Install with: pip install -e . --config-settings editable_mode=strict
+# After installing all sibling packages as editable:
+#   pip install -e ../tk-stt
+#   pip install -e ../tk-punctuation
+#   pip install -e ../tk-aligner
+#   pip install -e ../tk-srt-merger
+#   pip install -e ../tk-srt-translate
+#   pip install -e ../tk-down
+#   pip install -e ../tk-channel-checker
+#   pip install -e ../tk-comment-checker
+#   pip install -e .
