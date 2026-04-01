@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+
+# Media files (test/sample data)
+*.mp4
+*.mp3
+*.wav
+*.webm
+*.srt
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp

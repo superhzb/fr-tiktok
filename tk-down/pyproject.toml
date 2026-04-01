@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tk-down"
+version = "0.1.0"
+description = "TikTok video downloader CLI and library"
+requires-python = ">=3.11"
+dependencies = [
+    "playwright",
+    "httpx",
+    "beautifulsoup4",
+    "click",
+]
+
+[project.scripts]
+tk-down = "tk_down.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tk_down"]

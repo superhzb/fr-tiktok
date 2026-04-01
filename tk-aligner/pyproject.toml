@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tk-aligner"
+version = "0.1.0"
+description = "Forced audio-text alignment CLI and library using mlx-audio Qwen3-ForcedAligner"
+requires-python = ">=3.11"
+dependencies = [
+    "mlx-audio",
+    "click",
+]
+
+[project.scripts]
+tk-aligner = "tk_aligner.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tk_aligner"]

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tk-srt-merger"
+version = "0.1.0"
+description = "Merge word-level timestamps with punctuated text into an SRT file"
+requires-python = ">=3.11"
+dependencies = [
+    "click",
+]
+
+[project.scripts]
+tk-srt-merger = "tk_srt_merger.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tk_srt_merger"]

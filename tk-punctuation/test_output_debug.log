@@ -1,0 +1,168 @@
+[2026-03-31T21:46:29] DEBUG tk_punctuation.cli: Reading input from file: input.json
+[2026-03-31T21:46:29] INFO tk_punctuation.cli: Starting punctuation (model=kredor/punctuate-all, chunk_words=180).
+[2026-03-31T21:46:39] DEBUG tk_punctuation.punctuator: Loading model: kredor/punctuate-all
+[2026-03-31T21:46:39] DEBUG httpcore.connection: connect_tcp.started host='huggingface.co' port=443 local_address=None timeout=10 socket_options=None
+[2026-03-31T21:46:39] DEBUG httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x110ba27b0>
+[2026-03-31T21:46:39] DEBUG httpcore.connection: start_tls.started ssl_context=<ssl.SSLContext object at 0x1109f6c30> server_hostname='huggingface.co' timeout=10
+[2026-03-31T21:46:39] DEBUG httpcore.connection: start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x110be4410>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 307, b'Temporary Redirect', [(b'Content-Type', b'text/plain; charset=utf-8'), (b'Content-Length', b'244'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:39 GMT'), (b'Location', b'/api/resolve-cache/models/kredor/punctuate-all/0fe37019de3f5e4fbd83289fd94e07fa588e47df/config.json?%2Fkredor%2Fpunctuate-all%2Fresolve%2Fmain%2Fconfig.json=&etag=%2274669952438a6b3699609a73d7b77bc8c0b62b3d%22'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc78ff-2d5b6b514c2b83cb3e6662f3;4a964ac4-58a4-42ee-a921-f18a37f0960a'), (b'RateLimit', b'"resolvers";r=2999;t=29'), (b'RateLimit-Policy', b'"fixed window";"resolvers";q=3000;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin, Accept'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Repo-Commit', b'0fe37019de3f5e4fbd83289fd94e07fa588e47df'), (b'Accept-Ranges', b'bytes'), (b'X-Hub-Cache', b'HIT'), (b'Content-Disposition', b'inline; filename*=UTF-8\'\'config.json; filename="config.json";'), (b'Content-Security-Policy', b"default-src 'none'; sandbox"), (b'X-Linked-ETag', b'"74669952438a6b3699609a73d7b77bc8c0b62b3d"'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'2daSS279RHM5DJmNtXsIs4Vu_rIHe9Vlgnra3yPNOJx6zwPTaGUyLQ==')])
+[2026-03-31T21:46:39] INFO httpx: HTTP Request: HEAD https://huggingface.co/kredor/punctuate-all/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'text/plain; charset=utf-8'), (b'Content-Length', b'914'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 12 Nov 2025 09:18:05 GMT'), (b'ETag', b'"74669952438a6b3699609a73d7b77bc8c0b62b3d"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-691450cd-435808a70352edd97daaf870;e7e9f44c-d5b1-4adb-ac1c-99ebec2f529a'), (b'RateLimit', b'"resolvers";r=2634;t=91'), (b'RateLimit-Policy', b'"fixed window";"resolvers";q=3000;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Repo-Commit', b'0fe37019de3f5e4fbd83289fd94e07fa588e47df'), (b'Accept-Ranges', b'bytes'), (b'Content-Disposition', b'inline; filename*=UTF-8\'\'config.json; filename="config.json";'), (b'Content-Security-Policy', b"default-src 'none'; sandbox"), (b'Vary', b'Origin'), (b'X-Cache', b'Hit from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'xiGP-8Q55d_Ih-LaL6iMTS_f4CDyIVcuwLfwlVzto1odYsS_LnYk7w=='), (b'Age', b'12068914')])
+[2026-03-31T21:46:39] INFO httpx: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/kredor/punctuate-all/0fe37019de3f5e4fbd83289fd94e07fa588e47df/config.json "HTTP/1.1 200 OK"
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'Content-Type', b'text/plain; charset=utf-8'), (b'Content-Length', b'15'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:39 GMT'), (b'ETag', b'W/"f-mY2VvLxuxB7KhsoOdQTlMTccuAQ"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc78ff-1a4dbee873d5cf8f7086023c;c81a07ab-f48a-4916-be68-c596fe785288'), (b'RateLimit', b'"resolvers";r=2998;t=29'), (b'RateLimit-Policy', b'"fixed window";"resolvers";q=3000;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Repo-Commit', b'0fe37019de3f5e4fbd83289fd94e07fa588e47df'), (b'Accept-Ranges', b'bytes'), (b'X-Hub-Cache', b'MISS'), (b'X-Error-Code', b'EntryNotFound'), (b'X-Error-Message', b'Entry not found'), (b'X-Cache', b'Error from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'14O9CHEbrdRKw0hBnH9NYUa2V9_Z9nHpIet7_4NZRpH3u_owmH9TYw==')])
+[2026-03-31T21:46:39] INFO httpx: HTTP Request: HEAD https://huggingface.co/kredor/punctuate-all/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:39 GMT'), (b'content-encoding', b'gzip'), (b'ETag', b'W/"783-kIMk7MmQ/529/+6wr2hw1C8P9Gk"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc78ff-59e874e90004ee0c367853b3;dcb3723a-2384-4cb7-b91f-c40e428e19c0'), (b'RateLimit', b'"api";r=499;t=29'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'vary', b'Accept-Encoding'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'lrjo_r1yZX-Fj7RSGz16GY1ZiiIxTRkiIO8eVIqpxp-k2YDwgQaPog==')])
+[2026-03-31T21:46:39] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all "HTTP/1.1 200 OK"
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:39] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:39] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 44840.79it/s]
+[1mXLMRobertaForTokenClassification LOAD REPORT[0m from: kredor/punctuate-all
+Key                             | Status     |  | 
+--------------------------------+------------+--+-
+roberta.embeddings.position_ids | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+[2026-03-31T21:46:40] DEBUG httpcore.connection: connect_tcp.started host='huggingface.co' port=443 local_address=None timeout=None socket_options=None
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'content-encoding', b'gzip'), (b'ETag', b'W/"bd9-no4+Vg4db/gR73PUQ2HNY6y/MpQ"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-61365ab00f8981a550f963ea;0123c8c5-c395-4daf-81cd-64169a9a00ec'), (b'RateLimit', b'"api";r=498;t=28'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'vary', b'Accept-Encoding'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Total-Count', b'14'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'PYB9j2k8z0PlEKTAslrHUMfuWmUX2usYweXKVLuPBhK8wFXOzFrWPg==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all/commits/main "HTTP/1.1 200 OK"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.connection: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x110c62850>
+[2026-03-31T21:46:40] DEBUG httpcore.connection: start_tls.started ssl_context=<ssl.SSLContext object at 0x1109f6c30> server_hostname='huggingface.co' timeout=None
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.connection: start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x110d48640>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'content-encoding', b'gzip'), (b'ETag', b'W/"da6-WhsYyDIKPSiBaLtfFO3wvutrcPU"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-7b4011fe215bd24f361e7c6b;76b8dcc6-2b37-4eef-9e20-623706ebdb23'), (b'RateLimit', b'"api";r=497;t=28'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'vary', b'Accept-Encoding'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'Su2sLBb9_9B9mdFivjiOHjMY6hq-ubXTaLhlOICwlBUpAacG40E5eQ==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all/discussions?p=0 "HTTP/1.1 200 OK"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Content-Length', b'64'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'ETag', b'W/"40-09f9IAqP13xarAhQxFS2W8rvRkM"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-00c94e2352f58810009144ca;dc9449ff-2663-42a6-99de-76f32a565aee'), (b'RateLimit', b'"api";r=496;t=28'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Error-Code', b'EntryNotFound'), (b'X-Error-Message', b'additional_chat_templates does not exist on "main"'), (b'X-Cache', b'Error from cloudfront'), (b'Via', b'1.1 015b526555c583edc1af74c9bddda618.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'eobmNxeDKayWnnfjLN3FeSZFYfdRFUk69QcuuPYEbtaZpUXOn7ySOg==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'content-encoding', b'gzip'), (b'ETag', b'W/"f9e-Lb3cHWokWjtHXuruBg9ItbsF92A"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-531508a101b267f811339ac1;1a151a06-a7cb-4273-9e68-6980872589d5'), (b'RateLimit', b'"api";r=495;t=28'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'vary', b'Accept-Encoding'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Total-Count', b'15'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'bTVGAysSO5WHPMqaDgMXwqhtY3QMFrIpYTpA6UTo7F9iNTxickBrfA==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all/commits/refs%2Fpr%2F5 "HTTP/1.1 200 OK"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'content-encoding', b'gzip'), (b'ETag', b'W/"57c-Safv/RSVheFZU7u3pMx/2FaObfE"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-0fe0536865c2fa5e709b5c93;3be1e4d9-d9ba-4902-b492-d51cd571e30d'), (b'RateLimit', b'"api";r=494;t=28'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'vary', b'Accept-Encoding'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 015b526555c583edc1af74c9bddda618.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'nmDZRzJd1AwNEkKWajXQfzpaLIAay3-BWe2jT54xWRI7-AJ7-CpdkA==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'Content-Type', b'text/plain; charset=utf-8'), (b'Content-Length', b'15'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'ETag', b'W/"f-mY2VvLxuxB7KhsoOdQTlMTccuAQ"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-2a9db7ac187336be1baa1366;1c89c3d0-0198-41b9-a29f-8838c76703be'), (b'RateLimit', b'"resolvers";r=2997;t=28'), (b'RateLimit-Policy', b'"fixed window";"resolvers";q=3000;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Repo-Commit', b'2bdf95f32524aa74974b1d397791be63ac12fade'), (b'Accept-Ranges', b'bytes'), (b'X-Hub-Cache', b'MISS'), (b'X-Error-Code', b'EntryNotFound'), (b'X-Error-Message', b'Entry not found'), (b'X-Cache', b'Error from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'wXZAGfw5z1GkvW1IoY2efTVNVVncztVkI9nSJTR6CI08YCK3UOcGig==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: HEAD https://huggingface.co/kredor/punctuate-all/resolve/refs%2Fpr%2F5/model.safetensors.index.json "HTTP/1.1 404 Not Found"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:40] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 302, b'Found', [(b'Content-Type', b'text/plain; charset=utf-8'), (b'Content-Length', b'1347'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:40 GMT'), (b'Location', b'https://cas-bridge.xethub.hf.co/xet-bridge-us/62517677aae41fe76930b91c/d775d4f2713a09f3258612bbfa83ee0cd27fa71ecdcf6f87024284144f54aa7b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cas%2F20260401%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260401T014640Z&X-Amz-Expires=3600&X-Amz-Signature=0276ff34ab1cf6075028246d61ee02cca12b007bd5de59f7c16a7b9041f669ec&X-Amz-SignedHeaders=host&X-Xet-Cas-Uid=public&response-content-disposition=inline%3B+filename*%3DUTF-8%27%27model.safetensors%3B+filename%3D%22model.safetensors%22%3B&x-amz-checksum-mode=ENABLED&x-id=GetObject&Expires=1775011600&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc3NTAxMTYwMH19LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2FzLWJyaWRnZS54ZXRodWIuaGYuY28veGV0LWJyaWRnZS11cy82MjUxNzY3N2FhZTQxZmU3NjkzMGI5MWMvZDc3NWQ0ZjI3MTNhMDlmMzI1ODYxMmJiZmE4M2VlMGNkMjdmYTcxZWNkY2Y2Zjg3MDI0Mjg0MTQ0ZjU0YWE3YioifV19&Signature=IocCsGL2BLL8z0sRPaL7M0c84bNHhQsdfcslNbc3C295lcuxH-ju2jX2hTm8-K2vw8UF2juQfr3CbHnmbeawrgutmqA41B%7Ec3WFH1auaTsA8ii5JsNciV5SLQe0jvyu1nmkwDAlfEZaw6xEYn6npLcidKXH9QZaVukv4Tiag8JhePZDuh4cIIxJZOF4Vk6A47V34iJHl65cMDNF%7EqhMkPAfFvnF-4S5uCS2DR7sqx7GkQXJ2G9q1f6y4Xg-M4jxkS%7ES9UOFr4MBHPQ75ENU6s%7EK-8Bd46iydJ7YlCU0WNUHSwWgEg7H8hX14aVT4DxEDa4c4srRaOJ4PinIANkmm7Q__&Key-Pair-Id=K2L8F4GPSG1IFC'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7900-54d0b69311ee238c41610bea;dd95f181-060e-4c4f-8c4c-336421793d9e'), (b'RateLimit', b'"resolvers";r=2996;t=28'), (b'RateLimit-Policy', b'"fixed window";"resolvers";q=3000;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin, Accept'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Repo-Commit', b'2bdf95f32524aa74974b1d397791be63ac12fade'), (b'Accept-Ranges', b'bytes'), (b'X-HF-Warning', b'unauthenticated; Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.'), (b'X-Hub-Cache', b'MISS'), (b'X-Linked-Size', b'1109858936'), (b'X-Linked-ETag', b'"37f9ea59051ec76f376f273b63b97c706057907d553f2f32452a9a346bd94ad5"'), (b'X-Xet-Hash', b'd775d4f2713a09f3258612bbfa83ee0cd27fa71ecdcf6f87024284144f54aa7b'), (b'Link', b'<https://huggingface.co/api/models/kredor/punctuate-all/xet-read-token/2bdf95f32524aa74974b1d397791be63ac12fade>; rel="xet-auth", <https://cas-server.xethub.hf.co/v1/reconstructions/d775d4f2713a09f3258612bbfa83ee0cd27fa71ecdcf6f87024284144f54aa7b>; rel="xet-reconstruction-info"'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'0NgCi5JIR07aE_vM5deFM1uurRr3i8NBBz1BgjyhCklOvePfqNEoQw==')])
+[2026-03-31T21:46:40] INFO httpx: HTTP Request: HEAD https://huggingface.co/kredor/punctuate-all/resolve/refs%2Fpr%2F5/model.safetensors "HTTP/1.1 302 Found"
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'HEAD']>
+[2026-03-31T21:46:40] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:41] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:41] DEBUG httpcore.http11: response_closed.complete
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-03-31T21:46:41] WARNING huggingface_hub.utils._http: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-03-31T21:46:41] DEBUG httpcore.http11: send_request_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:41] DEBUG httpcore.http11: send_request_headers.complete
+[2026-03-31T21:46:41] DEBUG httpcore.http11: send_request_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:41] DEBUG httpcore.http11: send_request_body.complete
+[2026-03-31T21:46:41] DEBUG httpcore.http11: receive_response_headers.started request=<Request [b'GET']>
+[2026-03-31T21:46:41] DEBUG httpcore.http11: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Date', b'Wed, 01 Apr 2026 01:46:41 GMT'), (b'content-encoding', b'gzip'), (b'ETag', b'W/"783-kIMk7MmQ/529/+6wr2hw1C8P9Gk"'), (b'X-Powered-By', b'huggingface-moon'), (b'X-Request-Id', b'Root=1-69cc7901-64e1763f65d91ebe71f48a30;b6287b37-d002-4cfb-b056-fa98a7bc3618'), (b'RateLimit', b'"api";r=499;t=27'), (b'RateLimit-Policy', b'"fixed window";"api";q=500;w=300'), (b'cross-origin-opener-policy', b'same-origin'), (b'Referrer-Policy', b'strict-origin-when-cross-origin'), (b'Access-Control-Max-Age', b'86400'), (b'Access-Control-Allow-Origin', b'https://huggingface.co'), (b'Vary', b'Origin'), (b'vary', b'Accept-Encoding'), (b'Access-Control-Expose-Headers', b'X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash'), (b'X-Cache', b'Miss from cloudfront'), (b'Via', b'1.1 e7ebfb9cbbe33f2c9648abfd86e6defc.cloudfront.net (CloudFront)'), (b'X-Amz-Cf-Pop', b'YUL62-P3'), (b'X-Amz-Cf-Id', b'qZnF_kzhvLKzFrKB1WDqTZ9KkIG3h1dLHh8PPEuV39_E-LnoQfDbYg==')])
+[2026-03-31T21:46:41] INFO httpx: HTTP Request: GET https://huggingface.co/api/models/kredor/punctuate-all "HTTP/1.1 200 OK"
+[2026-03-31T21:46:41] DEBUG httpcore.http11: receive_response_body.started request=<Request [b'GET']>
+[2026-03-31T21:46:41] DEBUG httpcore.http11: receive_response_body.complete
+[2026-03-31T21:46:41] DEBUG httpcore.http11: response_closed.started
+[2026-03-31T21:46:41] DEBUG httpcore.http11: response_closed.complete
+[2026-03-31T21:46:42] DEBUG tk_punctuation.punctuator: Model loaded.
+[2026-03-31T21:46:42] DEBUG tk_punctuation.punctuator: Total words to process: 837
+/Users/brett/Documents/GitHub/fr-tiktok/tk-punctuation/.venv/lib/python3.14/site-packages/transformers/pipelines/token_classification.py:444: UserWarning: Tokenizer does not support real words, using fallback heuristic
+  warnings.warn(
+[2026-03-31T21:46:43] DEBUG tk_punctuation.punctuator: Chunk 1: accepted words 0-170, read 0-179, rollback=9
+[2026-03-31T21:46:43] DEBUG tk_punctuation.punctuator: Chunk 2: accepted words 171-329, read 171-350, rollback=21
+[2026-03-31T21:46:43] DEBUG tk_punctuation.punctuator: Chunk 3: accepted words 330-501, read 330-509, rollback=8
+[2026-03-31T21:46:43] DEBUG tk_punctuation.punctuator: Chunk 4: accepted words 502-650, read 502-681, rollback=31
+[2026-03-31T21:46:43] DEBUG tk_punctuation.punctuator: Chunk 5: accepted words 651-817, read 651-830, rollback=13
+[2026-03-31T21:46:43] DEBUG tk_punctuation.punctuator: Chunk 6: accepted words 818-836, read 818-836, rollback=0
+[2026-03-31T21:46:43] INFO tk_punctuation.cli: Done. Output length: 4417 chars.
+[2026-03-31T21:46:43] DEBUG httpcore.connection: close.started
+[2026-03-31T21:46:43] DEBUG httpcore.connection: close.complete
+[2026-03-31T21:46:43] DEBUG httpcore.connection: close.started
+[2026-03-31T21:46:43] DEBUG httpcore.connection: close.complete

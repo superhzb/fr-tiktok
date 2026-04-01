@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tk-punctuation"
+version = "0.1.0"
+description = "Add punctuation to raw transcription text using kredor/punctuate-all"
+requires-python = ">=3.11"
+dependencies = [
+    "transformers>=4.40",
+    "torch",
+]
+
+[project.scripts]
+tk-punctuation = "tk_punctuation.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
