@@ -17,11 +17,14 @@ interface Props {
 export default function VideoPlayer({ video, active, subtitleSettings, onSubtitleSettingsChange }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [paused, setPaused] = useState(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
+  const progressRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
 
   const videoSrc = fileUrl(video.files.video_url)
   const vttSrc = fileUrl(video.files.vtt_url)
@@ -42,6 +45,40 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
   const handleTimeUpdate = useCallback(() => {
     setCurrentTime(videoRef.current?.currentTime ?? 0)
   }, [])
+
+  const handleLoadedMetadata = useCallback(() => {
+    setDuration(videoRef.current?.duration ?? 0)
+  }, [])
+
+  const seekToPosition = useCallback((clientX: number) => {
+    const bar = progressRef.current
+    const el = videoRef.current
+    if (!bar || !el || !duration) return
+    const rect = bar.getBoundingClientRect()
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    el.currentTime = ratio * duration
+    setCurrentTime(ratio * duration)
+  }, [duration])
+
+  const handleProgressMouseDown = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    isDragging.current = true
+    seekToPosition(e.clientX)
+    const onMove = (ev: MouseEvent) => { if (isDragging.current) seekToPosition(ev.clientX) }
+    const onUp = () => { isDragging.current = false; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [seekToPosition])
+
+  const handleProgressTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation()
+    isDragging.current = true
+    seekToPosition(e.touches[0].clientX)
+    const onMove = (ev: TouchEvent) => { if (isDragging.current) seekToPosition(ev.touches[0].clientX) }
+    const onEnd = () => { isDragging.current = false; window.removeEventListener('touchmove', onMove); window.removeEventListener('touchend', onEnd) }
+    window.addEventListener('touchmove', onMove)
+    window.addEventListener('touchend', onEnd)
+  }, [seekToPosition])
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX
@@ -86,6 +123,7 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
         playsInline
         muted={false}
         onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
         onClick={togglePlay}
       />
 
@@ -96,6 +134,25 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
           </div>
         </div>
       )}
+
+      {/* Progress bar */}
+      <div
+        ref={progressRef}
+        className="absolute left-0 right-0 h-1 cursor-pointer group"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 0.5rem)', zIndex: 20 }}
+        onMouseDown={handleProgressMouseDown}
+        onTouchStart={handleProgressTouchStart}
+      >
+        {/* hit area padding */}
+        <div className="absolute inset-x-0 -top-2 bottom-0" />
+        {/* track */}
+        <div className="absolute inset-0 bg-white/20" />
+        {/* fill */}
+        <div
+          className="absolute inset-y-0 left-0 bg-white/70 transition-none"
+          style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+        />
+      </div>
 
       <SubtitleOverlay
         cues={cues}
