@@ -53,6 +53,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="LLM sampling temperature (default: 0)",
     )
     p.add_argument(
+        "--prompt", type=Path, default=None,
+        help="Path to prompt template file (default: packaged prompt.txt)",
+    )
+    p.add_argument(
         "-v", "--verbose", action="count", default=0,
         help="Increase verbosity: -v = INFO, -vv = DEBUG",
     )
@@ -89,9 +93,17 @@ def main(argv: list[str] | None = None) -> None:
     log.info("Output: %s", output_path)
     log.info("Format: %s", output_format)
     log.info("Model:  %s", config.model_path)
+    if args.prompt:
+        log.info("Prompt: %s", args.prompt)
 
     try:
-        translate_srt(input_path, output_path, config, output_format=output_format)
+        translate_srt(
+            input_path,
+            output_path,
+            config,
+            output_format=output_format,
+            prompt_file=args.prompt,
+        )
     except Exception as exc:
         log.error("Translation failed: %s", exc)
         log.debug("Traceback:", exc_info=True)

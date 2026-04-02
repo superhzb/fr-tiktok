@@ -2,7 +2,7 @@
 import logging
 from pathlib import Path
 
-from .batcher import translate_all
+from .batcher import load_prompt_template, translate_all
 from .config import TranslationConfig
 from .parser import SubtitleFormat, format_bilingual_subtitles, parse_srt
 from .preprocessor import preprocess
@@ -15,6 +15,7 @@ def translate_srt(
     output_path: str | Path,
     config: TranslationConfig | None = None,
     output_format: SubtitleFormat = "srt",
+    prompt_file: str | Path | None = None,
 ) -> Path:
     """
     Translate an SRT file and write bilingual subtitles to output_path.
@@ -24,6 +25,7 @@ def translate_srt(
         output_path: path where the bilingual subtitle file will be written
         config:      TranslationConfig (defaults used if None)
         output_format: subtitle format to render, "srt" or "vtt"
+        prompt_file: optional prompt template override
 
     Returns:
         Resolved output path
@@ -43,7 +45,8 @@ def translate_srt(
     segments, translation_input = preprocess(segments)
     logger.info("After preprocessing: %d segments", len(segments))
 
-    translations = translate_all(translation_input, config)
+    prompt_template = load_prompt_template(Path(prompt_file) if prompt_file else None)
+    translations = translate_all(translation_input, config, prompt_template)
 
     bilingual = format_bilingual_subtitles(segments, translations, output_format=output_format)
     output_path.write_text(bilingual, encoding="utf-8")

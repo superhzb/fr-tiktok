@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tk-srt-translate"
+name = "tk-comment-translator"
 version = "0.1.0"
-description = "Translate SRT subtitle files into bilingual SRT using a local MLX LLM"
+description = "Translate TikTok comment JSON into bilingual JSON using a local MLX LLM"
 requires-python = ">=3.10"
 dependencies = [
     "mlx>=0.18",
@@ -13,11 +13,8 @@ dependencies = [
 ]
 
 [project.scripts]
-tk-srt-translate = "tk_srt_translate.cli:main"
+tk-comment-translator = "tk_comment_translator.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["tk_srt_translate*"]
-
-[tool.setuptools.package-data]
-tk_srt_translate = ["prompt.txt"]
+include = ["tk_comment_translator*"]

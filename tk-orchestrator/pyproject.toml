@@ -16,6 +16,7 @@ dependencies = [
     "tk-down",
     "tk-channel-checker",
     "tk-comment-checker",
+    "tk-comment-translator",
     "click",
     "sqlalchemy",
     "pyyaml",
@@ -41,4 +42,5 @@ packages = ["src/tk_orchestrator"]
 #   pip install -e ../tk-down
 #   pip install -e ../tk-channel-checker
 #   pip install -e ../tk-comment-checker
+#   pip install -e ../tk-comment-translator
 #   pip install -e .

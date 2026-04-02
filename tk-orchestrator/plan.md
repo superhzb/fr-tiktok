@@ -242,7 +242,9 @@ Use a single `config.py` module that reads from a YAML or TOML config file with 
 |-----|---------|-------------|
 | `poll_interval_seconds` | 60 | how often to check channels for new videos |
 | `output_dir` | `~/Public/Tiktok` | base directory for downloads and generated files |
-| `video_count` | 10 | videos to fetch per channel check |
+| `video_count` | 1 | new videos to discover per channel check |
+| `channel_fetch_limit` | 20 | videos to request per channel-checker fetch while scanning backward |
+| `channel_scan_limit` | 200 | maximum videos to scan in one poll for a channel |
 | `comment_count` | 10 | comments to fetch per video |
 | `stt_model` | `mlx-community/whisper-large-v3-asr-4bit` | STT model ID |
 | `aligner_model` | `mlx-community/Qwen3-ForcedAligner-0.6B-8bit` | aligner model ID |
@@ -281,10 +283,11 @@ tk-orch start                       # start the scheduler + queue worker + API s
 Uses APScheduler to run on a configurable interval (default: 60 seconds).
 
 **What it does each tick:**
-1. For each active channel in the DB, run `tk-channel-checker <url> --count <N>`
-2. Parse the JSON output. For each video:
-   - If the video ID already exists in the DB: update stats (views, likes, etc.) but do nothing else
-   - If the video ID is **new**: insert into DB, fetch comments with `tk-comments`, and push a new job onto the queue
+1. For each active channel in the DB, run `tk-channel-checker <url> --count <N>` repeatedly as needed, scanning newest-first until enough unseen videos are found
+2. Parse the JSON output and walk backward through the channel feed:
+   - If the newest video is already in the DB, continue checking older videos
+   - For each video ID that is **not** in the DB yet: insert it, fetch comments with `tk-comments`, and push a new job onto the queue
+   - Stop once `video_count` unseen videos have been discovered, or there are no more videos to check
 3. Update `last_checked_at` on the channel
 
 **Error handling:** If `tk-channel-checker` fails (non-zero exit), log the error and skip that channel this tick. Do not crash the scheduler.

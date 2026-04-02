@@ -10,9 +10,11 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    inspect,
     String,
     Text,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Session, relationship
 
@@ -67,6 +69,7 @@ class Comment(Base):
     user = Column(String)
     username = Column(String)
     text = Column(Text)
+    zh = Column(Text)
     likes = Column(Integer)
     fetched_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -100,6 +103,19 @@ def init_db(config: Config) -> None:
     db_url = f"sqlite:///{config.db_path.resolve()}"
     _engine = create_engine(db_url, connect_args={"check_same_thread": False})
     Base.metadata.create_all(_engine)
+    _ensure_comment_columns()
+
+
+def _ensure_comment_columns() -> None:
+    engine = get_engine()
+    inspector = inspect(engine)
+    if "comments" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("comments")}
+    if "zh" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE comments ADD COLUMN zh TEXT"))
 
 
 def get_engine():

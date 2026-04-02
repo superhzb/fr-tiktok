@@ -2,6 +2,7 @@
 import json
 import logging
 import time
+from pathlib import Path
 
 from .config import TranslationConfig
 from .llm import generate_text
@@ -9,41 +10,18 @@ from .validator import ValidationError, parse_and_validate
 
 logger = logging.getLogger(__name__)
 
-_PROMPT_TEMPLATE = """\
-你是一名专业法语字幕译员，任务是将法语字幕翻译成准确、贴近原句结构的中文，用于语言学习。
-
-翻译规则：
-
-1. 只输出 JSON 数组，格式严格如下：
-  [{{"id": 1, "zh": "翻译内容"}}, ...]
-
-2. 必须保留并按顺序输出所有id： 每一条输出的 id 必须原样复制自输入字幕；
-   注意: 输出条目与 原字幕 必须一一对应，禁止跳过、重复或错位；
-
-翻译要求：
-
-1. 尽量直译，保持原句逻辑和语序
-2. 中文需通顺，但允许保留轻微"外语感"
-3. 可参考【前文提要】理解语境
-4. 输出必须是单个完整JSON数组，格式严格为：[{{...}}, {{...}}, {{...}}]，不要分行输出多个数组。
-
-输入示例：
-[{{"id": 1, "fr": "Et il faut être vraiment fort pour aller jusqu'au bout."}}]
-
-输出示例：
-[{{"id": 1, "zh": "而且要走到最后，真的需要很强"}}]
-
-前文提要：
-{context}
-
-待处理字幕：
-{segments}"""
+_DEFAULT_PROMPT_FILE = Path(__file__).with_name("prompt.txt")
 
 
-def _build_prompt(context_segments: list[dict], batch: list[dict]) -> str:
+def load_prompt_template(prompt_file: Path | None = None) -> str:
+    path = prompt_file or _DEFAULT_PROMPT_FILE
+    return path.read_text(encoding="utf-8")
+
+
+def _build_prompt(context_segments: list[dict], batch: list[dict], prompt_template: str) -> str:
     context_text = "\n".join(s["fr"] for s in context_segments)
     segments_json = json.dumps(batch, ensure_ascii=False)
-    return _PROMPT_TEMPLATE.format(context=context_text, segments=segments_json)
+    return prompt_template.format(context=context_text, segments=segments_json)
 
 
 def _translate_batch(
@@ -51,9 +29,10 @@ def _translate_batch(
     context_segments: list[dict],
     config: TranslationConfig,
     batch_id: str,
+    prompt_template: str,
 ) -> list[dict]:
     """Translate one batch with retries. Raises ValidationError on total failure."""
-    prompt = _build_prompt(context_segments, batch)
+    prompt = _build_prompt(context_segments, batch, prompt_template)
     logger.debug("Batch %s: translating %d segments", batch_id, len(batch))
 
     last_error: Exception | None = None
@@ -81,10 +60,11 @@ def _translate_with_split(
     context_segments: list[dict],
     config: TranslationConfig,
     batch_id: str,
+    prompt_template: str,
 ) -> list[dict]:
     """Recursively split and retry failing batches down to single segments."""
     try:
-        return _translate_batch(batch, context_segments, config, batch_id)
+        return _translate_batch(batch, context_segments, config, batch_id, prompt_template)
     except ValidationError:
         if len(batch) == 1:
             logger.error(
@@ -99,14 +79,19 @@ def _translate_with_split(
             batch_id, batch_id, len(half_a), batch_id, len(half_b),
         )
 
-        results_a = _translate_with_split(half_a, context_segments, config, f"{batch_id}_a")
-        results_b = _translate_with_split(half_b, context_segments, config, f"{batch_id}_b")
+        results_a = _translate_with_split(
+            half_a, context_segments, config, f"{batch_id}_a", prompt_template
+        )
+        results_b = _translate_with_split(
+            half_b, context_segments, config, f"{batch_id}_b", prompt_template
+        )
         return results_a + results_b
 
 
 def translate_all(
     segments: list[dict],
     config: TranslationConfig,
+    prompt_template: str,
 ) -> dict[int, str]:
     """
     Translate all segments in batches.
@@ -131,7 +116,7 @@ def translate_all(
             "Translating %s: segments %d–%d of %d",
             batch_id, batch[0]["id"], batch[-1]["id"], total,
         )
-        results = _translate_with_split(batch, context, config, batch_id)
+        results = _translate_with_split(batch, context, config, batch_id, prompt_template)
         for item in results:
             translations[item["id"]] = item["zh"]
 

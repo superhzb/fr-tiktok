@@ -15,6 +15,7 @@ venv/
 *.wav
 *.webm
 *.srt
+output/
 
 # OS
 .DS_Store
