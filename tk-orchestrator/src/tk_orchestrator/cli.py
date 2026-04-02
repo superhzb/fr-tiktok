@@ -156,13 +156,25 @@ async def _channel_check_async(username: str, config: Config) -> None:
             return
         channel_id, channel_url = ch.id, ch.url
 
-    job_ids = await poll_channel(channel_id, username, channel_url, config)
-    if not job_ids:
+    result = await poll_channel(channel_id, username, channel_url, config)
+    if not result.job_ids:
+        if result.reason == "channel_limit_reached":
+            click.echo(
+                f"Skipped @{username}: channel stored video limit reached "
+                f"({result.channel_video_total}/{config.max_videos_per_channel})."
+            )
+            return
+        if result.reason == "total_limit_reached":
+            click.echo(
+                "Skipped poll: global stored video limit reached "
+                f"({result.total_video_total}/{config.max_videos_total})."
+            )
+            return
         click.echo("No new videos found.")
         return
 
-    click.echo(f"Found {len(job_ids)} new video(s). Running pipeline...")
-    for job_id in job_ids:
+    click.echo(f"Found {len(result.job_ids)} new video(s). Running pipeline...")
+    for job_id in result.job_ids:
         await run_pipeline(job_id, config)
 
 

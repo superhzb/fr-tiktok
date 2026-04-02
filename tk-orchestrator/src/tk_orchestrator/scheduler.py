@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import json
 import logging
 import tempfile
@@ -19,6 +20,14 @@ _checker_log = logging.getLogger("tk_orchestrator.scheduler.channel_checker")
 _comments_log = logging.getLogger("tk_orchestrator.scheduler.comments")
 
 
+@dataclasses.dataclass
+class PollResult:
+    job_ids: list[int]
+    reason: str
+    channel_video_total: int
+    total_video_total: int
+
+
 async def _run_channel_checker_count(channel_url: str, count: int) -> list[dict]:
     try:
         stdout = await run_cmd(
@@ -36,11 +45,21 @@ def _video_exists(video_id: str) -> bool:
         return s.get(Video, video_id) is not None
 
 
+def _channel_video_count(channel_id: int) -> int:
+    with get_session() as s:
+        return s.query(Video).filter(Video.channel_id == channel_id).count()
+
+
+def _total_video_count() -> int:
+    with get_session() as s:
+        return s.query(Video).count()
+
+
 async def _find_new_videos(channel_url: str, config: Config) -> list[dict]:
-    """Return up to ``video_count`` unseen videos, walking newest to oldest."""
-    target_new_videos = max(config.video_count, 1)
-    per_channel_limit = max(config.channel_fetch_limit, 1)
-    total_scan_limit = max(config.channel_scan_limit, per_channel_limit)
+    """Return up to ``videos_per_poll`` unseen videos, walking newest to oldest."""
+    target_new_videos = max(config.videos_per_poll, 1)
+    per_channel_limit = max(config.max_videos_per_channel, 1)
+    total_scan_limit = max(config.max_videos_total, per_channel_limit)
     batch_size = max(target_new_videos, per_channel_limit)
     discovered_new_videos: list[dict] = []
     seen_ids: set[str] = set()
@@ -131,12 +150,47 @@ async def _translate_comments(
 
 async def poll_channel(
     channel_id: int, username: str, channel_url: str, config: Config
-) -> list[int]:
+) -> PollResult:
     """Poll one channel. Returns job IDs for newly discovered videos."""
     logger.info("Polling @%s", username)
+    per_channel_limit = max(config.max_videos_per_channel, 1)
+    total_video_limit = max(config.max_videos_total, per_channel_limit)
+    channel_video_total = _channel_video_count(channel_id)
+    total_video_total = _total_video_count()
+    logger.info(
+        "Channel state @%s: stored_channel_videos=%d/%d stored_total_videos=%d/%d videos_per_poll=%d",
+        username,
+        channel_video_total,
+        per_channel_limit,
+        total_video_total,
+        total_video_limit,
+        max(config.videos_per_poll, 1),
+    )
+    if channel_video_total >= per_channel_limit:
+        logger.info(
+            "Skipping @%s: channel has reached stored video limit (%d/%d)",
+            username,
+            channel_video_total,
+            per_channel_limit,
+        )
+        return PollResult([], "channel_limit_reached", channel_video_total, total_video_total)
+
+    if total_video_total >= total_video_limit:
+        logger.info(
+            "Skipping @%s: global stored video limit reached (%d/%d)",
+            username,
+            total_video_total,
+            total_video_limit,
+        )
+        return PollResult([], "total_limit_reached", channel_video_total, total_video_total)
+
     videos = await _find_new_videos(channel_url, config)
     if not videos:
-        return []
+        logger.info(
+            "No unseen videos discovered for @%s within this poll window",
+            username,
+        )
+        return PollResult([], "no_new_videos", channel_video_total, total_video_total)
 
     new_job_ids: list[int] = []
 
@@ -152,6 +206,34 @@ async def poll_channel(
                 existing.comments_count = v.get("comments")
                 existing.shares = v.get("shares")
             else:
+                if channel_video_total >= per_channel_limit:
+                    logger.info(
+                        "Stopping @%s: channel stored video limit reached during poll (%d/%d)",
+                        username,
+                        channel_video_total,
+                        per_channel_limit,
+                    )
+                    return PollResult(
+                        new_job_ids,
+                        "channel_limit_reached",
+                        channel_video_total,
+                        total_video_total,
+                    )
+
+                if total_video_total >= total_video_limit:
+                    logger.info(
+                        "Stopping @%s: global stored video limit reached during poll (%d/%d)",
+                        username,
+                        total_video_total,
+                        total_video_limit,
+                    )
+                    return PollResult(
+                        new_job_ids,
+                        "total_limit_reached",
+                        channel_video_total,
+                        total_video_total,
+                    )
+
                 is_new = True
                 created_at = None
                 if v.get("create_date"):
@@ -180,6 +262,18 @@ async def poll_channel(
                 s.add(job)
                 s.flush()
                 new_job_id = job.id
+                channel_video_total += 1
+                total_video_total += 1
+                logger.info(
+                    "Stored new video %s for @%s and created job %d; stored_channel_videos=%d/%d stored_total_videos=%d/%d",
+                    v["id"],
+                    username,
+                    new_job_id,
+                    channel_video_total,
+                    per_channel_limit,
+                    total_video_total,
+                    total_video_limit,
+                )
 
         if is_new and new_job_id is not None:
             logger.info("New video discovered: %s (@%s)", v["id"], username)
@@ -204,7 +298,16 @@ async def poll_channel(
         if ch:
             ch.last_checked_at = datetime.now(timezone.utc)
 
-    return new_job_ids
+    logger.info(
+        "Poll result @%s: created_jobs=%d stored_channel_videos=%d/%d stored_total_videos=%d/%d",
+        username,
+        len(new_job_ids),
+        channel_video_total,
+        per_channel_limit,
+        total_video_total,
+        total_video_limit,
+    )
+    return PollResult(new_job_ids, "created_jobs", channel_video_total, total_video_total)
 
 
 async def poll_all_channels(config: Config) -> None:
@@ -213,11 +316,28 @@ async def poll_all_channels(config: Config) -> None:
     with get_session() as s:
         channels = s.query(Channel).filter(Channel.is_active == True).all()
         channel_infos = [(c.id, c.username, c.url) for c in channels]
+        total_videos = s.query(Video).count()
+
+    logger.info(
+        "Scheduler state: active_channels=%d stored_total_videos=%d/%d videos_per_poll=%d",
+        len(channel_infos),
+        total_videos,
+        max(config.max_videos_total, max(config.max_videos_per_channel, 1)),
+        max(config.videos_per_poll, 1),
+    )
 
     for channel_id, username, channel_url in channel_infos:
-        job_ids = await poll_channel(channel_id, username, channel_url, config)
-        for job_id in job_ids:
+        result = await poll_channel(channel_id, username, channel_url, config)
+        for job_id in result.job_ids:
             enqueue(job_id)
+        logger.info(
+            "Scheduler channel summary @%s: reason=%s enqueued_jobs=%d stored_channel_videos=%d stored_total_videos=%d",
+            username,
+            result.reason,
+            len(result.job_ids),
+            result.channel_video_total,
+            result.total_video_total,
+        )
 
 
 def setup_scheduler(config: Config) -> AsyncIOScheduler:

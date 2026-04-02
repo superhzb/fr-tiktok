@@ -15,9 +15,12 @@ _DEFAULT_CONFIG_PATHS = [
 _ENV_MAP: dict[str, tuple[str, type]] = {
     "TK_POLL_INTERVAL_SECONDS": ("poll_interval_seconds", int),
     "TK_OUTPUT_DIR": ("output_dir", Path),
-    "TK_VIDEO_COUNT": ("video_count", int),
-    "TK_CHANNEL_FETCH_LIMIT": ("channel_fetch_limit", int),
-    "TK_CHANNEL_SCAN_LIMIT": ("channel_scan_limit", int),
+    "TK_VIDEOS_PER_POLL": ("videos_per_poll", int),
+    "TK_MAX_VIDEOS_PER_CHANNEL": ("max_videos_per_channel", int),
+    "TK_MAX_VIDEOS_TOTAL": ("max_videos_total", int),
+    "TK_VIDEO_COUNT": ("videos_per_poll", int),
+    "TK_CHANNEL_FETCH_LIMIT": ("max_videos_per_channel", int),
+    "TK_CHANNEL_SCAN_LIMIT": ("max_videos_total", int),
     "TK_COMMENT_COUNT": ("comment_count", int),
     "TK_STT_MODEL": ("stt_model", str),
     "TK_ALIGNER_MODEL": ("aligner_model", str),
@@ -33,9 +36,9 @@ class Config:
     output_dir: Path = dataclasses.field(
         default_factory=lambda: Path("./output")
     )
-    video_count: int = 1
-    channel_fetch_limit: int = 20
-    channel_scan_limit: int = 200
+    videos_per_poll: int = 1
+    max_videos_per_channel: int = 20
+    max_videos_total: int = 200
     comment_count: int = 10
     stt_model: str = "mlx-community/whisper-large-v3-asr-4bit"
     aligner_model: str = "mlx-community/Qwen3-ForcedAligner-0.6B-8bit"
@@ -74,6 +77,15 @@ def load_config(path: Path | None = None) -> Config:
     if path is not None and path.exists():
         with path.open() as f:
             data = yaml.safe_load(f) or {}
+
+    legacy_key_map = {
+        "video_count": "videos_per_poll",
+        "channel_fetch_limit": "max_videos_per_channel",
+        "channel_scan_limit": "max_videos_total",
+    }
+    for legacy_key, new_key in legacy_key_map.items():
+        if new_key not in data and legacy_key in data:
+            data[new_key] = data[legacy_key]
 
     for env_key, (field_name, cast) in _ENV_MAP.items():
         val = os.environ.get(env_key)

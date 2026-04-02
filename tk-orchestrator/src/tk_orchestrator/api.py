@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
+import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -10,6 +12,7 @@ from .config import Config
 from .db import Channel, Comment, Job, Video, get_session
 
 app = FastAPI(title="tk-orchestrator", version="0.1.0")
+logger = logging.getLogger(__name__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,6 +22,21 @@ app.add_middleware(
 )
 
 _config: Config | None = None
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    started = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - started) * 1000
+    logger.info(
+        'API %s %s -> %d in %.1fms',
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+    return response
 
 
 def configure(config: Config) -> None:

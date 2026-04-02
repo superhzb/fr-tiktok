@@ -9,6 +9,11 @@ build/
 venv/
 .venv/
 
+# Node / Vite
+node_modules/
+coverage/
+*.tsbuildinfo
+
 # Media files (test/sample data)
 *.mp4
 *.mp3

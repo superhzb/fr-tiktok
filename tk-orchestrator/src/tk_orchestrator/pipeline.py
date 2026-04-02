@@ -68,6 +68,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         if j:
             j.status = "running"
             j.started_at = datetime.now(timezone.utc)
+            logger.info("Job %d state changed: pending -> running", job_id)
 
     def set_step(step: str) -> None:
         with get_session() as s:
@@ -83,6 +84,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j.failed_step = step
                 j.error_message = error
                 j.current_step = None
+                logger.error("Job %d state changed: running -> failed at %s", job_id, step)
 
     current_step = "download"
     try:
@@ -182,6 +184,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j.status = "completed"
                 j.current_step = None
                 j.completed_at = datetime.now(timezone.utc)
+                logger.info("Job %d state changed: running -> completed", job_id)
 
         logger.info("Job %d completed", job_id)
         job_logger.info("Pipeline completed successfully")
