@@ -44,7 +44,6 @@ export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Pr
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <span className="text-white text-lg">⚙️</span>
           </div>
-          <span className="text-white text-xs mt-1 opacity-80">CC</span>
         </button>
       </div>
     </>

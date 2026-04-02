@@ -25,16 +25,18 @@ export default function CommentsPanel({ videoId, open, onClose }: Props) {
   }, [videoId, open])
 
   return (
-    <div
-      className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 ${
-        open ? 'translate-y-0' : 'translate-y-full'
-      }`}
-      style={{ maxHeight: '70vh' }}
-    >
-      {/* Backdrop */}
+    <>
+      {/* Backdrop — sits above video (z-40) so clicks on upper area close the panel */}
       {open && (
-        <div className="fixed inset-0 bg-black/40 -z-10" onClick={onClose} />
+        <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
       )}
+
+      <div
+        className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 ${
+          open ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ maxHeight: '70vh' }}
+      >
 
       <div className="bg-neutral-900 rounded-t-2xl flex flex-col" style={{ maxHeight: '70vh' }}>
         {/* Header */}
@@ -75,6 +77,7 @@ export default function CommentsPanel({ videoId, open, onClose }: Props) {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

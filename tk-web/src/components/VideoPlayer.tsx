@@ -20,6 +20,8 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [paused, setPaused] = useState(false)
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
 
   const videoSrc = fileUrl(video.files.video_url)
   const vttSrc = fileUrl(video.files.vtt_url)
@@ -41,6 +43,21 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
     setCurrentTime(videoRef.current?.currentTime ?? 0)
   }, [])
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!commentsOpen) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
+    // Left-edge swipe: starts within 30px of left, moves right >60px, not too vertical
+    if (touchStartX.current < 30 && dx > 60 && dy < 80) {
+      setCommentsOpen(false)
+    }
+  }, [commentsOpen])
+
   const togglePlay = useCallback(() => {
     const el = videoRef.current
     if (!el) return
@@ -56,7 +73,11 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
   if (!videoSrc) return null
 
   return (
-    <div className="relative w-full h-full bg-black flex items-center justify-center snap-start snap-always shrink-0 overflow-hidden">
+    <div
+      className="relative w-full h-full bg-black flex items-center justify-center snap-start snap-always shrink-0 overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <video
         ref={videoRef}
         src={videoSrc}
