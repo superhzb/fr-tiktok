@@ -40,7 +40,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-screen bg-black overflow-hidden">
+    <div className="w-screen bg-black overflow-hidden" style={{ height: '100dvh' }}>
       {/* Centered card on desktop */}
       <div className="h-full max-w-sm mx-auto relative">
         <VideoFeed videos={videos} />

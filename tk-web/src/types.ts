@@ -33,6 +33,18 @@ export interface Comment {
 
 export type SubtitleMode = 'fr' | 'zh' | 'both'
 
+/** 0 = top, 4 = bottom (above description bar) */
+export type SubtitlePosition = 0 | 1 | 2 | 3 | 4
+
+/** 0 = small, 1 = medium, 2 = large */
+export type SubtitleFontSize = 0 | 1 | 2
+
+export interface SubtitleSettings {
+  position: SubtitlePosition
+  fontSize: SubtitleFontSize
+  mode: SubtitleMode
+}
+
 export interface SubtitleCue {
   startTime: number
   endTime: number

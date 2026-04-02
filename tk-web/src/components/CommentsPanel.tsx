@@ -8,11 +8,11 @@ interface Props {
   onClose: () => void
 }
 
-type CommentLang = 'fr' | 'zh'
+type CommentLang = 'both' | 'fr'
 
 export default function CommentsPanel({ videoId, open, onClose }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
-  const [lang, setLang] = useState<CommentLang>('fr')
+  const [lang, setLang] = useState<CommentLang>('both')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -40,17 +40,11 @@ export default function CommentsPanel({ videoId, open, onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <h2 className="text-white font-semibold text-sm">{comments.length} Comments</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <button
-              onClick={() => setLang('fr')}
+              onClick={() => setLang(lang === 'both' ? 'fr' : 'both')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                lang === 'fr' ? 'bg-white text-black' : 'bg-white/20 text-white'
-              }`}
-            >FR</button>
-            <button
-              onClick={() => setLang('zh')}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                lang === 'zh' ? 'bg-white text-black' : 'bg-white/20 text-white'
+                lang === 'both' ? 'bg-white text-black' : 'bg-white/20 text-white'
               }`}
             >中文</button>
             <button onClick={onClose} className="text-white/60 text-xl leading-none ml-2">×</button>
@@ -67,9 +61,10 @@ export default function CommentsPanel({ videoId, open, onClose }: Props) {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-white/60 text-xs mb-0.5">@{c.username}</p>
-                  <p className="text-white text-sm leading-relaxed">
-                    {lang === 'zh' && c.zh ? c.zh : c.text}
-                  </p>
+                  <p className="text-white text-sm leading-relaxed">{c.text}</p>
+                  {lang === 'both' && c.zh && (
+                    <p className="text-yellow-300 text-xs leading-relaxed mt-0.5">{c.zh}</p>
+                  )}
                 </div>
                 <div className="flex flex-col items-center shrink-0">
                   <span className="text-white/40 text-xs">❤️</span>

@@ -1,30 +1,30 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
-import type { Video, SubtitleMode } from '../types'
+import type { Video, SubtitleSettings } from '../types'
 import { fileUrl } from '../api'
 import { useVtt } from '../hooks/useVtt'
 import SubtitleOverlay from './SubtitleOverlay'
 import ChannelBar from './ChannelBar'
 import CommentsPanel from './CommentsPanel'
+import SubtitleSettingsPanel from './SubtitleSettingsPanel'
 
 interface Props {
   video: Video
   active: boolean
+  subtitleSettings: SubtitleSettings
+  onSubtitleSettingsChange: (s: SubtitleSettings) => void
 }
 
-const SUBTITLE_CYCLE: SubtitleMode[] = ['both', 'fr', 'zh']
-
-export default function VideoPlayer({ video, active }: Props) {
+export default function VideoPlayer({ video, active, subtitleSettings, onSubtitleSettingsChange }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
-  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode>('both')
   const [commentsOpen, setCommentsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [paused, setPaused] = useState(false)
 
   const videoSrc = fileUrl(video.files.video_url)
   const vttSrc = fileUrl(video.files.vtt_url)
   const cues = useVtt(vttSrc)
 
-  // Play/pause based on active prop
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
@@ -53,17 +53,10 @@ export default function VideoPlayer({ video, active }: Props) {
     }
   }, [])
 
-  const cycleSubtitles = useCallback(() => {
-    setSubtitleMode(m => {
-      const idx = SUBTITLE_CYCLE.indexOf(m)
-      return SUBTITLE_CYCLE[(idx + 1) % SUBTITLE_CYCLE.length]
-    })
-  }, [])
-
   if (!videoSrc) return null
 
   return (
-    <div className="relative w-full h-full bg-black flex items-center justify-center snap-start snap-always shrink-0">
+    <div className="relative w-full h-full bg-black flex items-center justify-center snap-start snap-always shrink-0 overflow-hidden">
       <video
         ref={videoRef}
         src={videoSrc}
@@ -75,7 +68,6 @@ export default function VideoPlayer({ video, active }: Props) {
         onClick={togglePlay}
       />
 
-      {/* Pause indicator */}
       {paused && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center">
@@ -84,19 +76,31 @@ export default function VideoPlayer({ video, active }: Props) {
         </div>
       )}
 
-      <SubtitleOverlay cues={cues} currentTime={currentTime} mode={subtitleMode} />
+      <SubtitleOverlay
+        cues={cues}
+        currentTime={currentTime}
+        mode={subtitleSettings.mode}
+        position={subtitleSettings.position}
+        fontSize={subtitleSettings.fontSize}
+      />
 
       <ChannelBar
         video={video}
-        subtitleMode={subtitleMode}
-        onSubtitleToggle={cycleSubtitles}
         onCommentsOpen={() => setCommentsOpen(true)}
+        onSettingsOpen={() => setSettingsOpen(true)}
       />
 
       <CommentsPanel
         videoId={video.id}
         open={commentsOpen}
         onClose={() => setCommentsOpen(false)}
+      />
+
+      <SubtitleSettingsPanel
+        open={settingsOpen}
+        settings={subtitleSettings}
+        onChange={onSubtitleSettingsChange}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   )

@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Video } from '../types'
+import type { Video, SubtitleSettings } from '../types'
 import VideoPlayer from './VideoPlayer'
 
 interface Props {
   videos: Video[]
 }
 
+const DEFAULT_SETTINGS: SubtitleSettings = { position: 4, fontSize: 1, mode: 'both' }
+
 export default function VideoFeed({ videos }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [subtitleSettings, setSubtitleSettings] = useState<SubtitleSettings>(DEFAULT_SETTINGS)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,7 +47,12 @@ export default function VideoFeed({ videos }: Props) {
           data-index={i}
           className="w-full h-full snap-start snap-always shrink-0"
         >
-          <VideoPlayer video={video} active={i === activeIndex} />
+          <VideoPlayer
+            video={video}
+            active={i === activeIndex}
+            subtitleSettings={subtitleSettings}
+            onSubtitleSettingsChange={setSubtitleSettings}
+          />
         </div>
       ))}
     </div>

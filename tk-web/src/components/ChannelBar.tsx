@@ -1,10 +1,9 @@
-import type { Video, SubtitleMode } from '../types'
+import type { Video } from '../types'
 
 interface Props {
   video: Video
-  subtitleMode: SubtitleMode
-  onSubtitleToggle: () => void
   onCommentsOpen: () => void
+  onSettingsOpen: () => void
 }
 
 function fmt(n: number): string {
@@ -13,36 +12,17 @@ function fmt(n: number): string {
   return String(n)
 }
 
-const subtitleLabel: Record<SubtitleMode, string> = {
-  fr: 'FR',
-  zh: '中',
-  both: 'FR\n中',
-}
-
-export default function ChannelBar({ video, subtitleMode, onSubtitleToggle, onCommentsOpen }: Props) {
+export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Props) {
   return (
     <>
       {/* Bottom-left: author + description */}
-      <div className="absolute bottom-6 left-4 right-20 pointer-events-none">
+      <div className="absolute left-4 right-20 pointer-events-none" style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
         <p className="text-white font-bold text-sm mb-1">@{video.author}</p>
         <p className="text-white text-xs opacity-80 line-clamp-2">{video.description}</p>
       </div>
 
       {/* Right-side action column */}
-      <div className="absolute bottom-6 right-3 flex flex-col items-center gap-5">
-        {/* Subtitle toggle */}
-        <button
-          onClick={onSubtitleToggle}
-          className="flex flex-col items-center"
-        >
-          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-white text-xs font-bold leading-none whitespace-pre-line text-center">
-              {subtitleLabel[subtitleMode]}
-            </span>
-          </div>
-          <span className="text-white text-xs mt-1 opacity-80">CC</span>
-        </button>
-
+      <div className="absolute right-3 flex flex-col items-center gap-5" style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}>
         {/* Likes */}
         <div className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -59,13 +39,13 @@ export default function ChannelBar({ video, subtitleMode, onSubtitleToggle, onCo
           <span className="text-white text-xs mt-1">{fmt(video.comments_count)}</span>
         </button>
 
-        {/* Shares */}
-        <div className="flex flex-col items-center">
+        {/* Settings */}
+        <button onClick={onSettingsOpen} className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-white text-lg">↗️</span>
+            <span className="text-white text-lg">⚙️</span>
           </div>
-          <span className="text-white text-xs mt-1">{fmt(video.shares)}</span>
-        </div>
+          <span className="text-white text-xs mt-1 opacity-80">CC</span>
+        </button>
       </div>
     </>
   )
