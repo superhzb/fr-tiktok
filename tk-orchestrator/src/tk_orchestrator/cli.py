@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -202,6 +203,37 @@ async def _run_video_async(url: str, config: Config) -> None:
     channel_id = _ensure_channel(username)
     job_id = _ensure_job(video_id, channel_id, url)
     await run_pipeline(job_id, config)
+
+
+# ── reset ─────────────────────────────────────────────────────────────────────
+
+@main.command("reset")
+@click.option("--yes", is_flag=True, help="Skip confirmation prompt")
+@click.pass_context
+def reset(ctx: click.Context, yes: bool) -> None:
+    """Delete orchestrator database and generated output."""
+    config = _bootstrap(ctx.obj.get("config_path"))
+    db_path = config.db_path
+    output_dir = config.output_dir
+
+    click.echo("This will permanently delete:")
+    click.echo(f"  DB:     {db_path}")
+    click.echo(f"  Output: {output_dir}")
+    if not yes and not click.confirm("Continue?", default=False):
+        click.echo("Aborted.")
+        return
+
+    if db_path.exists():
+        db_path.unlink()
+        click.echo(f"Deleted DB: {db_path}")
+    else:
+        click.echo(f"DB not found: {db_path}")
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+        click.echo(f"Deleted output: {output_dir}")
+    else:
+        click.echo(f"Output not found: {output_dir}")
 
 
 # ── job inspection ────────────────────────────────────────────────────────────
