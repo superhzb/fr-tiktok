@@ -20,7 +20,6 @@ _ENV_MAP: dict[str, tuple[str, type]] = {
     "TK_STT_MODEL": ("stt_model", str),
     "TK_ALIGNER_MODEL": ("aligner_model", str),
     "TK_TRANSLATE_MODEL": ("translate_model", str),
-    "TK_TRANSLATE_FORMAT": ("translate_format", str),
     "TK_TRANSLATE_BATCH_SIZE": ("translate_batch_size", int),
     "TK_DB_PATH": ("db_path", Path),
 }
@@ -37,7 +36,6 @@ class Config:
     stt_model: str = "mlx-community/whisper-large-v3-asr-4bit"
     aligner_model: str = "mlx-community/Qwen3-ForcedAligner-0.6B-8bit"
     translate_model: str = "mlx-community/Qwen3-4B-Instruct-2507-4bit"
-    translate_format: str = "vtt"
     translate_batch_size: int = 10
     db_path: Path = dataclasses.field(
         default_factory=lambda: Path("./tk_orchestrator.db").resolve()

@@ -152,7 +152,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
 
         # ── translation ───────────────────────────────────────────────────────
         current_step = "translation"
-        vtt_path = video_dir / f"subtitles.bilingual.{config.translate_format}"
+        vtt_path = video_dir / "subtitles.vtt"
         set_step("translation")
         job_logger.info("[translation] translating subtitles")
         await run_cmd(
@@ -162,7 +162,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 "--output",
                 str(vtt_path),
                 "--format",
-                config.translate_format,
+                "vtt",
                 "--model",
                 config.translate_model,
                 "--batch-size",

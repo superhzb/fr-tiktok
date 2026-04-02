@@ -120,21 +120,21 @@ tk-srt-merger <aligned> <punctuated> [output] [--debug]
 
 ### 8. `tk-srt-translate`
 
-Translates SRT subtitles into bilingual format (French to Chinese). **GPU-bound.**
+Translates SRT subtitles into the final VTT format (French to Chinese). **GPU-bound.**
 
 ```
 tk-srt-translate <input> [--output FILE] [--format {srt|vtt}] [--model MODEL] [--batch-size N] [--max-tokens N] [--temperature N] [-v]
 ```
 
 - `input` — input .srt file
-- `--output` / `-o` — output path (default: `<input>.bilingual.<format>`)
+- `--output` / `-o` — output path
 - `--format` — `srt` or `vtt` (default: `srt`)
 - `--model` / `-m` — MLX translation model (default: `mlx-community/Qwen3-4B-Instruct-2507-4bit`)
 - `--batch-size` / `-b` — segments per batch (default: 10)
 - `--max-tokens` — per LLM call (default: 2048)
 - `--temperature` — sampling temp (default: 0.0)
 - `-v` — verbosity: `-v` = INFO, `-vv` = DEBUG
-- **output** — writes bilingual subtitle file to disk
+- **output** — writes final subtitle file to disk
 
 ---
 
@@ -164,7 +164,7 @@ tk-channel-checker (channel URL)
          tk-srt-merger (aligned.json + punctuated.json)  →  subtitles.srt
               │
               ▼
-         tk-srt-translate (subtitles.srt)  →  subtitles.bilingual.vtt
+         tk-srt-translate (subtitles.srt)  →  subtitles.vtt
 ```
 
 Intermediate files (`raw_transcription.json`, `punctuated.json`, `aligned.json`, `subtitles.srt`) should be kept alongside the video file for debugging.
@@ -227,7 +227,7 @@ Set up SQLite database with SQLAlchemy ORM. Tables needed:
 | error_message | TEXT | stderr or exception message |
 | video_path | TEXT | local path to downloaded video |
 | srt_path | TEXT | path to generated .srt |
-| vtt_path | TEXT | path to final bilingual .vtt |
+| vtt_path | TEXT | path to final .vtt |
 | created_at | DATETIME | |
 | started_at | DATETIME | |
 | completed_at | DATETIME | |
@@ -247,7 +247,6 @@ Use a single `config.py` module that reads from a YAML or TOML config file with 
 | `stt_model` | `mlx-community/whisper-large-v3-asr-4bit` | STT model ID |
 | `aligner_model` | `mlx-community/Qwen3-ForcedAligner-0.6B-8bit` | aligner model ID |
 | `translate_model` | `mlx-community/Qwen3-4B-Instruct-2507-4bit` | translation model ID |
-| `translate_format` | `vtt` | output subtitle format (`srt` or `vtt`) |
 | `translate_batch_size` | 10 | segments per translation batch |
 | `db_path` | `./tk_orchestrator.db` | SQLite database path |
 
@@ -310,7 +309,7 @@ Each step is run via `asyncio.create_subprocess_exec`. Capture both stdout and s
 | `punctuation` | `tk-punctuation --input-file <raw.json>` | raw JSON | `punctuated.json` (capture stdout, write to file) |
 | `alignment` | `tk-aligner <video_file> <punctuated.json> --output <aligned.json>` | video file + punctuated JSON | `aligned.json` |
 | `srt_merge` | `tk-srt-merger <aligned.json> <punctuated.json> <output.srt>` | aligned + punctuated JSONs | `subtitles.srt` |
-| `translation` | `tk-srt-translate <output.srt> --format vtt` | SRT file | `subtitles.bilingual.vtt` |
+| `translation` | `tk-srt-translate <output.srt> --format vtt` | SRT file | `subtitles.vtt` |
 
 **File organization per video:**
 ```
@@ -320,7 +319,7 @@ Each step is run via `asyncio.create_subprocess_exec`. Capture both stdout and s
     punctuated.json
     aligned.json
     subtitles.srt
-    subtitles.bilingual.vtt
+    subtitles.vtt
 ```
 
 ### Feature 6: Logging
@@ -345,7 +344,7 @@ GET  /channels/:username        — single channel + its videos
 GET  /videos                    — list videos (with filters: channel, status)
 GET  /videos/:id                — single video + its job status + subtitles
 GET  /videos/:id/comments       — comments for a video
-GET  /videos/:id/subtitles      — serve the bilingual VTT/SRT file
+GET  /videos/:id/subtitles      — serve the final VTT file
 GET  /jobs                      — list all jobs
 GET  /jobs/:id                  — single job detail
 ```
