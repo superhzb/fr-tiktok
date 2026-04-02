@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import type { Video, SubtitleSettings } from '../types'
 import { fileUrl } from '../api'
 import { useVtt } from '../hooks/useVtt'
+import { useWakeLock } from '../hooks/useWakeLock'
 import SubtitleOverlay from './SubtitleOverlay'
 import ChannelBar from './ChannelBar'
 import CommentsPanel from './CommentsPanel'
@@ -29,6 +30,8 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
   const videoSrc = fileUrl(video.files.video_url)
   const vttSrc = fileUrl(video.files.vtt_url)
   const cues = useVtt(vttSrc)
+
+  useWakeLock(videoRef)
 
   useEffect(() => {
     const el = videoRef.current
