@@ -1,0 +1,10 @@
+poll_interval_seconds: 60
+output_dir: ~/Public/Tiktok
+video_count: 10
+comment_count: 10
+stt_model: mlx-community/whisper-large-v3-asr-4bit
+aligner_model: mlx-community/Qwen3-ForcedAligner-0.6B-8bit
+translate_model: mlx-community/Qwen3-4B-Instruct-2507-4bit
+translate_format: vtt
+translate_batch_size: 10
+db_path: ./tk_orchestrator.db

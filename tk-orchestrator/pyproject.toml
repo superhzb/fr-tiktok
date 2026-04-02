@@ -17,6 +17,11 @@ dependencies = [
     "tk-channel-checker",
     "tk-comment-checker",
     "click",
+    "sqlalchemy",
+    "pyyaml",
+    "fastapi",
+    "uvicorn[standard]",
+    "apscheduler",
 ]
 
 [project.scripts]
