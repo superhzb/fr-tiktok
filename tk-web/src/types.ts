@@ -36,7 +36,7 @@ export type SubtitleMode = 'fr' | 'zh' | 'both'
 /** 0 = top, 4 = bottom (above description bar) */
 export type SubtitlePosition = 0 | 1 | 2 | 3 | 4
 
-/** 0 = small, 1 = medium, 2 = large */
+/** 0 = small (16px), 1 = medium (20px), 2 = large (26px) */
 export type SubtitleFontSize = 0 | 1 | 2
 
 export interface SubtitleSettings {

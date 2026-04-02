@@ -17,8 +17,8 @@ const POSITION_TOP: Record<SubtitlePosition, string | null> = {
   4: null, // bottom-anchored
 }
 
-const FR_SIZE: Record<SubtitleFontSize, number> = { 0: 13, 1: 16, 2: 20 }
-const ZH_SIZE: Record<SubtitleFontSize, number> = { 0: 11, 1: 13, 2: 17 }
+const FR_SIZE: Record<SubtitleFontSize, number> = { 0: 20, 1: 26, 2: 34 }
+const ZH_SIZE: Record<SubtitleFontSize, number> = { 0: 17, 1: 22, 2: 28 }
 
 export default function SubtitleOverlay({ cues, currentTime, mode, position, fontSize }: Props) {
   const cue = cues.find(c => currentTime >= c.startTime && currentTime <= c.endTime)

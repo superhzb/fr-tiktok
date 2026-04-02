@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { SubtitleSettings, SubtitlePosition, SubtitleFontSize, SubtitleMode } from '../types'
 
 interface Props {
@@ -7,18 +8,10 @@ interface Props {
   onClose: () => void
 }
 
-const POSITIONS: { label: string; value: SubtitlePosition }[] = [
-  { label: '1', value: 0 },
-  { label: '2', value: 1 },
-  { label: '3', value: 2 },
-  { label: '4', value: 3 },
-  { label: '5', value: 4 },
-]
-
-const FONT_SIZES: { label: string; value: SubtitleFontSize }[] = [
-  { label: 'A', value: 0 },
-  { label: 'A', value: 1 },
-  { label: 'A', value: 2 },
+const FONT_SIZES: { label: string; value: SubtitleFontSize; fontSize: number }[] = [
+  { label: 'A', value: 0, fontSize: 18 },
+  { label: 'A', value: 1, fontSize: 26 },
+  { label: 'A', value: 2, fontSize: 34 },
 ]
 
 const MODES: { label: string; value: SubtitleMode }[] = [
@@ -27,7 +20,75 @@ const MODES: { label: string; value: SubtitleMode }[] = [
   { label: '中文', value: 'zh' },
 ]
 
+function PositionSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  function getValueFromX(clientX: number) {
+    const rect = trackRef.current!.getBoundingClientRect()
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+    return Math.round(ratio * 4)
+  }
+
+  function onMouseDown(e: React.MouseEvent) {
+    onChange(getValueFromX(e.clientX))
+    const onMove = (ev: MouseEvent) => onChange(getValueFromX(ev.clientX))
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  function onTouchStart(e: React.TouchEvent) {
+    e.preventDefault()
+    onChange(getValueFromX(e.touches[0].clientX))
+    const onMove = (ev: TouchEvent) => onChange(getValueFromX(ev.touches[0].clientX))
+    const onEnd = () => {
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onEnd)
+    }
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend', onEnd)
+  }
+
+  const pct = (value / 4) * 100
+
+  return (
+    <div
+      ref={trackRef}
+      className="relative flex items-center h-12 cursor-pointer select-none"
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
+    >
+      {/* Track background */}
+      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/20" />
+      {/* Active fill */}
+      <div
+        className="absolute left-0 h-1.5 rounded-full bg-white/60"
+        style={{ width: `${pct}%` }}
+      />
+      {/* Tick marks */}
+      {[0, 1, 2, 3, 4].map(i => (
+        <div
+          key={i}
+          className="absolute w-0.5 h-2 rounded-full bg-white/40 -translate-x-1/2"
+          style={{ left: `${(i / 4) * 100}%` }}
+        />
+      ))}
+      {/* Thumb */}
+      <div
+        className="absolute w-8 h-8 rounded-full bg-white shadow-lg -translate-x-1/2 transition-[left] duration-100"
+        style={{ left: `${pct}%` }}
+      />
+    </div>
+  )
+}
+
 export default function SubtitleSettingsPanel({ open, settings, onChange, onClose }: Props) {
+  // Slider: 0=left=bottom(pos4), 4=right=top(pos0)
+  const sliderValue = 4 - settings.position
+
   return (
     <div
       className={`absolute inset-x-0 bottom-0 z-40 transition-transform duration-300 ${
@@ -66,26 +127,17 @@ export default function SubtitleSettingsPanel({ open, settings, onChange, onClos
         </div>
 
         {/* Position */}
-        <div className="mb-4">
-          <p className="text-white/60 text-xs mb-2 uppercase tracking-wide">Position</p>
-          <div className="flex items-center gap-1">
-            <span className="text-white/40 text-xs mr-1">Top</span>
-            <div className="flex flex-1 gap-2">
-              {POSITIONS.map(p => (
-                <button
-                  key={p.value}
-                  onClick={() => onChange({ ...settings, position: p.value })}
-                  className={`flex-1 h-8 rounded-lg text-xs font-semibold transition-colors ${
-                    settings.position === p.value
-                      ? 'bg-white text-black'
-                      : 'bg-white/15 text-white/70'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+        <div className="mb-2">
+          <p className="text-white/60 text-xs mb-1 uppercase tracking-wide">Position</p>
+          <div className="flex items-center gap-3">
+            <span className="text-white/40 text-xs">Bot</span>
+            <div className="flex-1">
+              <PositionSlider
+                value={sliderValue}
+                onChange={v => onChange({ ...settings, position: (4 - v) as SubtitlePosition })}
+              />
             </div>
-            <span className="text-white/40 text-xs ml-1">Bot</span>
+            <span className="text-white/40 text-xs">Top</span>
           </div>
         </div>
 
@@ -93,16 +145,16 @@ export default function SubtitleSettingsPanel({ open, settings, onChange, onClos
         <div>
           <p className="text-white/60 text-xs mb-2 uppercase tracking-wide">Font Size</p>
           <div className="flex gap-3">
-            {FONT_SIZES.map((f, i) => (
+            {FONT_SIZES.map(f => (
               <button
                 key={f.value}
                 onClick={() => onChange({ ...settings, fontSize: f.value })}
-                className={`flex-1 h-10 rounded-lg font-semibold transition-colors ${
+                className={`flex-1 h-12 rounded-lg font-semibold transition-colors ${
                   settings.fontSize === f.value
                     ? 'bg-white text-black'
                     : 'bg-white/15 text-white/70'
                 }`}
-                style={{ fontSize: 12 + i * 4 }}
+                style={{ fontSize: f.fontSize }}
               >
                 {f.label}
               </button>
