@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tk-batch-translate"
+version = "0.1.0"
+description = "Batch-translate TikTok comments and SRT subtitles (French to Chinese) using a local MLX LLM"
+requires-python = ">=3.10"
+dependencies = [
+    "mlx>=0.18",
+    "mlx-lm>=0.18",
+]
+
+[project.scripts]
+tk-batch-translate = "tk_batch_translate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tk_batch_translate*"]
+
+[tool.setuptools.package-data]
+"tk_batch_translate.comments" = ["prompt.txt"]
+"tk_batch_translate.srt" = ["prompt.txt"]

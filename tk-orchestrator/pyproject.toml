@@ -12,11 +12,10 @@ dependencies = [
     "tk-punctuation",
     "tk-aligner",
     "tk-srt-merger",
-    "tk-srt-translate",
+    "tk-batch-translate",
     "tk-down",
     "tk-channel-checker",
     "tk-comment-checker",
-    "tk-comment-translator",
     "click",
     "sqlalchemy",
     "pyyaml",
@@ -38,9 +37,8 @@ packages = ["src/tk_orchestrator"]
 #   pip install -e ../tk-punctuation
 #   pip install -e ../tk-aligner
 #   pip install -e ../tk-srt-merger
-#   pip install -e ../tk-srt-translate
+#   pip install -e ../tk-batch-translate
 #   pip install -e ../tk-down
 #   pip install -e ../tk-channel-checker
 #   pip install -e ../tk-comment-checker
-#   pip install -e ../tk-comment-translator
 #   pip install -e .

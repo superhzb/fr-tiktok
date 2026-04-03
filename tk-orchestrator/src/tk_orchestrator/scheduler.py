@@ -126,7 +126,7 @@ async def _translate_comments(
             )
 
             cmd = [
-                "tk-comment-translator",
+                "tk-batch-translate", "comments",
                 str(input_path),
                 "--output",
                 str(output_path),

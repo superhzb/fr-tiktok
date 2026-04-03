@@ -1,1 +1,0 @@
-J’ai les doigts toute croche 💔 #uber #qc #freestyle #humour #fyp 	

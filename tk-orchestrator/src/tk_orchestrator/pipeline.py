@@ -159,7 +159,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         job_logger.info("[translation] translating subtitles")
         await run_cmd(
             [
-                "tk-srt-translate",
+                "tk-batch-translate", "srt",
                 str(srt_path),
                 "--output",
                 str(vtt_path),
