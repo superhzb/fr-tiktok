@@ -2,7 +2,9 @@
 
 import json
 import logging
+import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -11,15 +13,40 @@ from .aligner import DEFAULT_MODEL_ID, align
 
 logger = logging.getLogger(__name__)
 
+_SERVICE = "tk-aligner"
+
+
+class _JSONFormatter(logging.Formatter):
+    """Emit one JSON object per log record to stderr."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        entry: dict = {
+            "time": datetime.fromtimestamp(record.created, timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            ),
+            "level": record.levelname,
+            "service": _SERVICE,
+            "event": record.name,
+            "message": record.getMessage(),
+        }
+        for key, env in (
+            ("job_id", "TK_JOB_ID"),
+            ("video_id", "TK_VIDEO_ID"),
+            ("pipeline_step", "TK_PIPELINE_STEP"),
+        ):
+            val = os.environ.get(env)
+            if val is not None:
+                entry[key] = val
+        if record.exc_info:
+            entry["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(entry, ensure_ascii=False)
+
 
 def _configure_logging(debug: bool) -> None:
     level = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(
-        format="%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
-        level=level,
-        stream=sys.stderr,
-    )
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(_JSONFormatter())
+    logging.basicConfig(level=level, handlers=[handler], force=True)
     if not debug:
         for noisy in ("mlx", "mlx_audio", "httpx", "httpcore", "urllib3"):
             logging.getLogger(noisy).setLevel(logging.WARNING)

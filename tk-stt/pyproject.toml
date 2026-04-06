@@ -15,5 +15,8 @@ dependencies = [
 [project.scripts]
 tk-stt = "tk_stt.cli:main"
 
+[dependency-groups]
+test = ["pytest"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/tk_stt"]

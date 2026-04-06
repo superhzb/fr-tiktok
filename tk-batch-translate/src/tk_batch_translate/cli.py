@@ -1,7 +1,9 @@
 """Unified CLI: tk-batch-translate {comments,srt}."""
 import json
 import logging
+import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -9,14 +11,45 @@ import click
 from .config import TranslationConfig
 
 _defaults = TranslationConfig()
+_SERVICE = "tk-batch-translate"
+
+logger = logging.getLogger(__name__)
+
+
+class _JSONFormatter(logging.Formatter):
+    """Emit one JSON object per log record to stderr."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        entry: dict = {
+            "time": datetime.fromtimestamp(record.created, timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            ),
+            "level": record.levelname,
+            "service": _SERVICE,
+            "event": record.name,
+            "message": record.getMessage(),
+        }
+        for key, env in (
+            ("job_id", "TK_JOB_ID"),
+            ("video_id", "TK_VIDEO_ID"),
+            ("pipeline_step", "TK_PIPELINE_STEP"),
+        ):
+            val = os.environ.get(env)
+            if val is not None:
+                entry[key] = val
+        if record.exc_info:
+            entry["exc_info"] = self.formatException(record.exc_info)
+        return json.dumps(entry, ensure_ascii=False)
 
 
 def _configure_logging(verbosity: int) -> None:
     levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(_JSONFormatter())
     logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
         level=levels.get(verbosity, logging.DEBUG),
+        handlers=[handler],
+        force=True,
     )
 
 
@@ -65,8 +98,8 @@ def comments(input: Path, description: Path | None, output: Path | None, verbose
         if not output:
             print(json.dumps(merged, ensure_ascii=False, indent=2))
     except Exception as exc:
-        logging.getLogger(__name__).error("Failed: %s", exc)
-        logging.getLogger(__name__).debug("Traceback:", exc_info=True)
+        logger.error("Failed: %s", exc)
+        logger.debug("Traceback:", exc_info=True)
         sys.exit(1)
 
 
@@ -88,8 +121,8 @@ def srt(input: Path, output_format: str, output: Path | None, verbose: int, prom
             output_format=output_format,
             prompt_file=prompt,
         )
-        print(f"Done: {output_path}")
+        logger.info("Saved to %s", output_path)
     except Exception as exc:
-        logging.getLogger(__name__).error("Failed: %s", exc)
-        logging.getLogger(__name__).debug("Traceback:", exc_info=True)
+        logger.error("Failed: %s", exc)
+        logger.debug("Traceback:", exc_info=True)
         sys.exit(1)

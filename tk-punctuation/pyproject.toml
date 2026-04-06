@@ -16,5 +16,8 @@ dependencies = [
 [project.scripts]
 tk-punctuation = "tk_punctuation.cli:main"
 
+[dependency-groups]
+test = ["pytest"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/tk_punctuation"]

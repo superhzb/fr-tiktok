@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,16 +53,23 @@ def _should_run(resume_step: str, step: str) -> bool:
     return _step_index(step) >= _step_index(resume_step)
 
 
-async def run_cmd(cmd: list[str], job_logger: logging.Logger) -> str:
+async def run_cmd(
+    cmd: list[str],
+    job_logger: logging.Logger,
+    *,
+    extra_env: dict[str, str] | None = None,
+) -> str:
     """Run a subprocess, stream stderr to the logger, and return stdout.
 
     Raises RuntimeError on non-zero exit code with stderr as the message.
     """
     job_logger.debug("$ %s", " ".join(cmd))
+    run_env = {**os.environ, **(extra_env or {})}
     proc = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        env=run_env,
     )
     stderr_lines: list[str] = []
 
@@ -184,6 +192,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
 
     video_path = Path(job.video_path) if job.video_path else None
     current_step = resume_step
+    ctx_env = {"TK_JOB_ID": str(job_id), "TK_VIDEO_ID": video_id}
+
+    def _step_env(step: str) -> dict[str, str]:
+        return {**ctx_env, "TK_PIPELINE_STEP": step}
+
     try:
         # ── download ──────────────────────────────────────────────────────────
         if _should_run(resume_step, "download"):
@@ -191,7 +204,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             set_step("download")
             job_logger.info("[download] %s", video_url)
             video_path = Path(
-                await run_cmd(["tk-down", video_url, "--output-dir", str(video_dir)], job_logger)
+                await run_cmd(
+                    ["tk-down", video_url, "--output-dir", str(video_dir)],
+                    job_logger,
+                    extra_env=_step_env("download"),
+                )
             )
             job_logger.info("[download] saved to %s", video_path)
             with get_session() as s:
@@ -213,6 +230,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             await run_cmd(
                 ["tk-stt", str(video_path), "--output", str(raw_json), "--model", config.stt_model],
                 job_logger,
+                extra_env=_step_env("stt"),
             )
 
         # ── punctuation ───────────────────────────────────────────────────────
@@ -221,7 +239,9 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             set_step("punctuation")
             job_logger.info("[punctuation] adding punctuation")
             punct_out = await run_cmd(
-                ["tk-punctuation", "--input-file", str(raw_json)], job_logger
+                ["tk-punctuation", "--input-file", str(raw_json)],
+                job_logger,
+                extra_env=_step_env("punctuation"),
             )
             punctuated_json.write_text(punct_out)
 
@@ -241,6 +261,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                     config.aligner_model,
                 ],
                 job_logger,
+                extra_env=_step_env("alignment"),
             )
 
         # ── SRT merge ─────────────────────────────────────────────────────────
@@ -251,6 +272,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             await run_cmd(
                 ["tk-srt-merger", str(aligned_json), str(punctuated_json), str(srt_path)],
                 job_logger,
+                extra_env=_step_env("srt_merge"),
             )
             with get_session() as s:
                 j = s.get(Job, job_id)
@@ -276,6 +298,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                     str(config.translate_batch_size),
                 ],
                 job_logger,
+                extra_env=_step_env("translation"),
             )
             with get_session() as s:
                 j = s.get(Job, job_id)

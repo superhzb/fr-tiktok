@@ -16,5 +16,8 @@ dependencies = [
 [project.scripts]
 tk-batch-translate = "tk_batch_translate.cli:main"
 
+[dependency-groups]
+test = ["pytest"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/tk_batch_translate"]
