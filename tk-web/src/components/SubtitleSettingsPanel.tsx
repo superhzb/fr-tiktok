@@ -1,10 +1,9 @@
 import { useRef } from 'react'
-import type { SubtitleSettings, SubtitlePosition, SubtitleFontSize, SubtitleMode } from '../types'
+import { useSubtitleSettings } from '../context/SubtitleSettingsContext'
+import type { SubtitlePosition, SubtitleFontSize, SubtitleMode } from '../types'
 
 interface Props {
   open: boolean
-  settings: SubtitleSettings
-  onChange: (s: SubtitleSettings) => void
   onClose: () => void
 }
 
@@ -85,7 +84,8 @@ function PositionSlider({ value, onChange }: { value: number; onChange: (v: numb
   )
 }
 
-export default function SubtitleSettingsPanel({ open, settings, onChange, onClose }: Props) {
+export default function SubtitleSettingsPanel({ open, onClose }: Props) {
+  const { settings, setSettings } = useSubtitleSettings()
   // Slider: 0=left=bottom(pos4), 4=right=top(pos0)
   const sliderValue = 4 - settings.position
 
@@ -113,7 +113,7 @@ export default function SubtitleSettingsPanel({ open, settings, onChange, onClos
             {MODES.map(m => (
               <button
                 key={m.value}
-                onClick={() => onChange({ ...settings, mode: m.value })}
+                onClick={() => setSettings({ ...settings, mode: m.value })}
                 className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors ${
                   settings.mode === m.value
                     ? 'bg-white text-black'
@@ -134,7 +134,7 @@ export default function SubtitleSettingsPanel({ open, settings, onChange, onClos
             <div className="flex-1">
               <PositionSlider
                 value={sliderValue}
-                onChange={v => onChange({ ...settings, position: (4 - v) as SubtitlePosition })}
+                onChange={v => setSettings({ ...settings, position: (4 - v) as SubtitlePosition })}
               />
             </div>
             <span className="text-white/40 text-xs">Top</span>
@@ -148,7 +148,7 @@ export default function SubtitleSettingsPanel({ open, settings, onChange, onClos
             {FONT_SIZES.map(f => (
               <button
                 key={f.value}
-                onClick={() => onChange({ ...settings, fontSize: f.value })}
+                onClick={() => setSettings({ ...settings, fontSize: f.value })}
                 className={`flex-1 h-12 rounded-lg font-semibold transition-colors ${
                   settings.fontSize === f.value
                     ? 'bg-white text-black'

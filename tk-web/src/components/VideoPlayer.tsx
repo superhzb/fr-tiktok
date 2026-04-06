@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
-import type { Video, SubtitleSettings } from '../types'
+import type { Video } from '../types'
 import { fileUrl } from '../api'
 import { useVtt } from '../hooks/useVtt'
 import { useWakeLock } from '../hooks/useWakeLock'
@@ -11,11 +11,9 @@ import SubtitleSettingsPanel from './SubtitleSettingsPanel'
 interface Props {
   video: Video
   active: boolean
-  subtitleSettings: SubtitleSettings
-  onSubtitleSettingsChange: (s: SubtitleSettings) => void
 }
 
-export default function VideoPlayer({ video, active, subtitleSettings, onSubtitleSettingsChange }: Props) {
+export default function VideoPlayer({ video, active }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -157,13 +155,7 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
         />
       </div>
 
-      <SubtitleOverlay
-        cues={cues}
-        currentTime={currentTime}
-        mode={subtitleSettings.mode}
-        position={subtitleSettings.position}
-        fontSize={subtitleSettings.fontSize}
-      />
+      <SubtitleOverlay cues={cues} currentTime={currentTime} />
 
       <ChannelBar
         video={video}
@@ -177,12 +169,7 @@ export default function VideoPlayer({ video, active, subtitleSettings, onSubtitl
         onClose={() => setCommentsOpen(false)}
       />
 
-      <SubtitleSettingsPanel
-        open={settingsOpen}
-        settings={subtitleSettings}
-        onChange={onSubtitleSettingsChange}
-        onClose={() => setSettingsOpen(false)}
-      />
+      <SubtitleSettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

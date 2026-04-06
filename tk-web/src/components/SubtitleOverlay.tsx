@@ -1,11 +1,9 @@
-import type { SubtitleCue, SubtitleMode, SubtitlePosition, SubtitleFontSize } from '../types'
+import { useSubtitleSettings } from '../context/SubtitleSettingsContext'
+import type { SubtitleCue, SubtitlePosition, SubtitleFontSize } from '../types'
 
 interface Props {
   cues: SubtitleCue[]
   currentTime: number
-  mode: SubtitleMode
-  position: SubtitlePosition
-  fontSize: SubtitleFontSize
 }
 
 // top% for each position; pos 4 uses bottom anchor instead
@@ -20,10 +18,12 @@ const POSITION_TOP: Record<SubtitlePosition, string | null> = {
 const FR_SIZE: Record<SubtitleFontSize, number> = { 0: 20, 1: 26, 2: 34 }
 const ZH_SIZE: Record<SubtitleFontSize, number> = { 0: 17, 1: 22, 2: 28 }
 
-export default function SubtitleOverlay({ cues, currentTime, mode, position, fontSize }: Props) {
+export default function SubtitleOverlay({ cues, currentTime }: Props) {
+  const { settings } = useSubtitleSettings()
   const cue = cues.find(c => currentTime >= c.startTime && currentTime <= c.endTime)
   if (!cue) return null
 
+  const { mode, position, fontSize } = settings
   const isBottom = position === 4
   const posStyle = isBottom
     ? { bottom: 'calc(130px)' }
