@@ -58,7 +58,7 @@ def _ensure_job(video_id: str, channel_id: int, url: str) -> int:
             s.add(video)
         existing = (
             s.query(Job)
-            .filter(Job.video_id == video_id, Job.status.in_(["pending", "running"]))
+            .filter(Job.video_id == video_id, Job.status.in_(["pending", "running", "interrupted"]))
             .first()
         )
         if existing:
@@ -196,14 +196,14 @@ async def _run_all_async(config: Config) -> None:
     from .pipeline import run_pipeline
 
     with get_session() as s:
-        pending = s.query(Job).filter(Job.status == "pending").all()
-        job_ids = [j.id for j in pending]
+        queued = s.query(Job).filter(Job.status.in_(["pending", "interrupted"])).all()
+        job_ids = [j.id for j in queued]
 
     if not job_ids:
-        click.echo("No pending jobs.")
+        click.echo("No pending or interrupted jobs.")
         return
 
-    click.echo(f"Running {len(job_ids)} pending job(s)...")
+    click.echo(f"Running {len(job_ids)} pending/interrupted job(s)...")
     for job_id in job_ids:
         await run_pipeline(job_id, config)
 
@@ -308,10 +308,11 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     import uvicorn
 
     from .api import app, configure, register_scheduler
-    from .queue import worker
+    from .queue import recover_interrupted_jobs, worker
     from .scheduler import setup_scheduler
 
     configure(config)
+    recovered_jobs = recover_interrupted_jobs()
     scheduler = setup_scheduler(config)
     register_scheduler(scheduler)
     scheduler.start()
@@ -320,6 +321,8 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     server = uvicorn.Server(uv_config)
 
     click.echo(f"tk-orchestrator started  (API: http://{host}:{port})")
+    if recovered_jobs:
+        click.echo(f"Recovered {len(recovered_jobs)} interrupted job(s).")
     await asyncio.gather(
         worker(config),
         server.serve(),

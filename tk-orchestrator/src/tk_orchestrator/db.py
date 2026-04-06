@@ -81,7 +81,7 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     video_id = Column(String, ForeignKey("videos.id"), nullable=False)
-    status = Column(String, default="pending")  # pending, running, completed, failed
+    status = Column(String, default="pending")  # pending, running, interrupted, completed, failed
     current_step = Column(String, nullable=True)
     failed_step = Column(String, nullable=True)
     error_message = Column(Text, nullable=True)
