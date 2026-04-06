@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "tk-batch-translate"
@@ -16,9 +16,5 @@ dependencies = [
 [project.scripts]
 tk-batch-translate = "tk_batch_translate.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-"tk_batch_translate.comments" = ["prompt.txt"]
-"tk_batch_translate.srt" = ["prompt.txt"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/tk_batch_translate"]

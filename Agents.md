@@ -13,7 +13,13 @@ This repo is an application workspace, not a set of independently released libra
 # Package Layout Rule
 
 - All Python packages must use `src/` layout: source code lives under `src/<package_name>/`, not at the project root.
-- `pyproject.toml` must set `where = ["src"]` (setuptools) or `packages = ["src/<package_name>"]` (hatchling).
+
+# Build System Rule
+
+- All packages must use **Hatchling** as the build backend.
+- Use `requires = ["hatchling"]` and `build-backend = "hatchling.build"` in `[build-system]`.
+- Declare the package under `[tool.hatch.build.targets.wheel]` with `packages = ["src/<package_name>"]`.
+- Do not use setuptools. Hatchling includes all files within the package directory (including non-Python data files) automatically.
 
 # CLI Framework Rule
 
