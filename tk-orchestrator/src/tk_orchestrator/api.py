@@ -3,10 +3,12 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
+from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Path as FastAPIPath, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, StringConstraints, field_validator
 
 from .config import Config
 from .db import Channel, Comment, Job, Video, get_session
@@ -52,6 +54,29 @@ def _output_dir() -> Path:
     if _config is None:
         return Path("./output").resolve()
     return _config.output_dir.resolve()
+
+
+VideoId = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, pattern=r"^\d{1,32}$"),
+]
+Username = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, pattern=r"^@?[A-Za-z0-9._-]{1,64}$"),
+]
+JobStatus = Literal["pending", "running", "completed", "failed"]
+
+
+class VideoListQuery(BaseModel):
+    channel: Username | None = None
+    status: JobStatus | None = None
+
+    @field_validator("channel")
+    @classmethod
+    def normalize_channel(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.lstrip("@")
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -146,7 +171,13 @@ async def list_channels():
 
 
 @app.get("/channels/{username}")
-async def get_channel(username: str):
+async def get_channel(
+    username: Annotated[
+        Username,
+        FastAPIPath(description="TikTok username, with or without a leading @"),
+    ]
+):
+    username = username.lstrip("@")
     with get_session() as s:
         c = s.query(Channel).filter(Channel.username == username).first()
         if not c:
@@ -158,13 +189,13 @@ async def get_channel(username: str):
 
 
 @app.get("/videos")
-async def list_videos(channel: str | None = None, status: str | None = None):
+async def list_videos(filters: Annotated[VideoListQuery, Query()]):
     with get_session() as s:
         q = s.query(Video)
-        if channel:
-            q = q.join(Channel).filter(Channel.username == channel)
-        if status:
-            q = q.join(Job).filter(Job.status == status)
+        if filters.channel:
+            q = q.join(Channel).filter(Channel.username == filters.channel)
+        if filters.status:
+            q = q.join(Job).filter(Job.status == filters.status)
         videos = q.order_by(Video.created_at.desc()).all()
         result = []
         for v in videos:
@@ -176,7 +207,12 @@ async def list_videos(channel: str | None = None, status: str | None = None):
 
 
 @app.get("/videos/{video_id}")
-async def get_video(video_id: str):
+async def get_video(
+    video_id: Annotated[
+        VideoId,
+        FastAPIPath(description="Numeric TikTok video ID"),
+    ]
+):
     with get_session() as s:
         v = s.query(Video).filter(Video.id == video_id).first()
         if not v:
@@ -188,7 +224,12 @@ async def get_video(video_id: str):
 
 
 @app.get("/videos/{video_id}/comments")
-async def get_video_comments(video_id: str):
+async def get_video_comments(
+    video_id: Annotated[
+        VideoId,
+        FastAPIPath(description="Numeric TikTok video ID"),
+    ]
+):
     with get_session() as s:
         v = s.query(Video).filter(Video.id == video_id).first()
         if not v:
@@ -203,7 +244,12 @@ async def get_video_comments(video_id: str):
 
 
 @app.get("/videos/{video_id}/subtitles")
-async def get_video_subtitles(video_id: str):
+async def get_video_subtitles(
+    video_id: Annotated[
+        VideoId,
+        FastAPIPath(description="Numeric TikTok video ID"),
+    ]
+):
     with get_session() as s:
         v = s.query(Video).filter(Video.id == video_id).first()
         if not v:
