@@ -9,3 +9,10 @@ This repo is an application workspace, not a set of independently released libra
 - The root `pyproject.toml` changes only when workspace members or repo-wide `uv` settings change.
 - Development and CI install with `uv sync --locked --all-packages`, not ad hoc `pip install`.
 - Any dependency change must update both the relevant `pyproject.toml` and `uv.lock`.
+
+# CLI Framework Rule
+
+- All service CLIs must use **Click** (not argparse).
+- Use `@click.command()` for single-command CLIs, `@click.group()` for subcommands.
+- Always set `context_settings={"help_option_names": ["-h", "--help"]}`.
+- Use `show_default=True` on options with defaults.

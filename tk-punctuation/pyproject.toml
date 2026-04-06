@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Add punctuation to raw transcription text using kredor/punctuate-all"
 requires-python = ">=3.11"
 dependencies = [
+    "click>=8.0",
     "transformers>=4.40",
     "torch",
 ]

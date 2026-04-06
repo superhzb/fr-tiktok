@@ -2116,12 +2116,14 @@ name = "tk-batch-translate"
 version = "0.1.0"
 source = { editable = "tk-batch-translate" }
 dependencies = [
+    { name = "click" },
     { name = "mlx" },
     { name = "mlx-lm" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.0" },
     { name = "mlx", specifier = ">=0.18" },
     { name = "mlx-lm", specifier = ">=0.18" },
 ]
@@ -2131,12 +2133,14 @@ name = "tk-channel-checker"
 version = "0.1.0"
 source = { editable = "tk-channel-checker" }
 dependencies = [
+    { name = "click" },
     { name = "playwright" },
     { name = "playwright-stealth" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.0" },
     { name = "playwright" },
     { name = "playwright-stealth" },
 ]
@@ -2146,6 +2150,7 @@ name = "tk-comment-checker"
 version = "0.1.0"
 source = { editable = "tk-comment-checker" }
 dependencies = [
+    { name = "click" },
     { name = "playwright" },
     { name = "playwright-stealth" },
     { name = "yt-dlp" },
@@ -2153,6 +2158,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.0" },
     { name = "playwright" },
     { name = "playwright-stealth" },
     { name = "yt-dlp" },
@@ -2221,12 +2227,14 @@ name = "tk-punctuation"
 version = "0.1.0"
 source = { editable = "tk-punctuation" }
 dependencies = [
+    { name = "click" },
     { name = "torch" },
     { name = "transformers" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.0" },
     { name = "torch" },
     { name = "transformers", specifier = ">=4.40" },
 ]

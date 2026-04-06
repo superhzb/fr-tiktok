@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Batch-translate TikTok comments and SRT subtitles (French to Chinese) using a local MLX LLM"
 requires-python = ">=3.10"
 dependencies = [
+    "click>=8.0",
     "mlx>=0.18",
     "mlx-lm>=0.18",
 ]

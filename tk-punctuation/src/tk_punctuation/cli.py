@@ -1,10 +1,11 @@
 """CLI entry point for tk-punctuation."""
 
-import argparse
 import json
 import logging
 import sys
 from pathlib import Path
+
+import click
 
 from .punctuator import DEFAULT_CHUNK_WORDS, DEFAULT_MODEL_ID, punctuate_text
 
@@ -25,45 +26,10 @@ def _configure_logging(debug: bool) -> None:
             logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="tk-punctuation",
-        description="Punctuate raw transcription text. "
-        "Reads JSON {\"text\": \"...\"} from --input-file or stdin; "
-        "writes JSON {\"text\": \"...\"} to stdout.",
-    )
-    parser.add_argument(
-        "--input-file",
-        type=Path,
-        metavar="FILE",
-        help="JSON file containing {\"text\": \"transcription\"}. "
-             "Defaults to stdin.",
-    )
-    parser.add_argument(
-        "--model",
-        default=DEFAULT_MODEL_ID,
-        metavar="MODEL_ID",
-        help=f"Hugging Face model id (default: {DEFAULT_MODEL_ID}).",
-    )
-    parser.add_argument(
-        "--chunk-words",
-        type=int,
-        default=DEFAULT_CHUNK_WORDS,
-        metavar="N",
-        help=f"Words per processing chunk (default: {DEFAULT_CHUNK_WORDS}).",
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug logging.",
-    )
-    return parser
-
-
-def _read_input(args: argparse.Namespace) -> str:
-    if args.input_file is not None:
-        logger.debug("Reading input from file: %s", args.input_file)
-        raw = args.input_file.read_text(encoding="utf-8")
+def _read_input(input_file: Path | None) -> str:
+    if input_file is not None:
+        logger.debug("Reading input from file: %s", input_file)
+        raw = input_file.read_text(encoding="utf-8")
     else:
         logger.debug("Reading input from stdin.")
         raw = sys.stdin.read()
@@ -86,18 +52,45 @@ def _read_input(args: argparse.Namespace) -> str:
     return text
 
 
-def main(argv: list[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
-    _configure_logging(args.debug)
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
+@click.option(
+    "--input-file",
+    type=click.Path(exists=True, path_type=Path),
+    metavar="FILE",
+    help='JSON file containing {"text": "transcription"}. Defaults to stdin.',
+)
+@click.option(
+    "--model",
+    default=DEFAULT_MODEL_ID,
+    show_default=True,
+    metavar="MODEL_ID",
+    help="Hugging Face model id.",
+)
+@click.option(
+    "--chunk-words",
+    type=int,
+    default=DEFAULT_CHUNK_WORDS,
+    show_default=True,
+    metavar="N",
+    help="Words per processing chunk.",
+)
+@click.option("--debug", is_flag=True, help="Enable debug logging.")
+def main(input_file: Path | None, model: str, chunk_words: int, debug: bool) -> None:
+    """Punctuate raw transcription text.
 
-    text = _read_input(args).strip()
+    Reads JSON {"text": "..."} from --input-file or stdin;
+    writes JSON {"text": "..."} to stdout.
+    """
+    _configure_logging(debug)
+
+    text = _read_input(input_file).strip()
     if not text:
         logger.warning("Input text is empty; writing empty result.")
         print(json.dumps({"text": ""}, ensure_ascii=False))
         return
 
-    logger.info("Starting punctuation (model=%s, chunk_words=%d).", args.model, args.chunk_words)
-    result = punctuate_text(text, model_id=args.model, chunk_words=args.chunk_words)
+    logger.info("Starting punctuation (model=%s, chunk_words=%d).", model, chunk_words)
+    result = punctuate_text(text, model_id=model, chunk_words=chunk_words)
     logger.info("Done. Output length: %d chars.", len(result))
 
     print(json.dumps({"text": result}, ensure_ascii=False))
