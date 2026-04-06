@@ -10,6 +10,11 @@ This repo is an application workspace, not a set of independently released libra
 - Development and CI install with `uv sync --locked --all-packages`, not ad hoc `pip install`.
 - Any dependency change must update both the relevant `pyproject.toml` and `uv.lock`.
 
+# Package Layout Rule
+
+- All Python packages must use `src/` layout: source code lives under `src/<package_name>/`, not at the project root.
+- `pyproject.toml` must set `where = ["src"]` (setuptools) or `packages = ["src/<package_name>"]` (hatchling).
+
 # CLI Framework Rule
 
 - All service CLIs must use **Click** (not argparse).
