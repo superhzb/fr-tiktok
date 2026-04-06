@@ -1,0 +1,30 @@
+[project]
+name = "fr-tiktok-workspace"
+version = "0.1.0"
+description = "Workspace root for the fr-tiktok Python packages"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "tk-aligner",
+    "tk-batch-translate",
+    "tk-channel-checker",
+    "tk-comment-checker",
+    "tk-down",
+    "tk-orchestrator",
+    "tk-punctuation",
+    "tk-srt-merger",
+    "tk-stt",
+]
+
+[tool.uv.sources]
+tk-aligner = { workspace = true }
+tk-batch-translate = { workspace = true }
+tk-channel-checker = { workspace = true }
+tk-comment-checker = { workspace = true }
+tk-down = { workspace = true }
+tk-orchestrator = { workspace = true }
+tk-punctuation = { workspace = true }
+tk-srt-merger = { workspace = true }
+tk-stt = { workspace = true }
