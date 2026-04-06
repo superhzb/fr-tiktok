@@ -20,6 +20,7 @@ coverage/
 *.wav
 *.webm
 *.srt
+*.db
 output/
 
 # OS
