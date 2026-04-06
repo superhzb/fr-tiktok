@@ -16,5 +16,4 @@ dependencies = [
 tk-channel-checker = "tk_channel_checker.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tk_channel_checker*"]
+where = ["src"]

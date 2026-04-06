@@ -17,8 +17,7 @@ dependencies = [
 tk-batch-translate = "tk_batch_translate.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["tk_batch_translate*"]
+where = ["src"]
 
 [tool.setuptools.package-data]
 "tk_batch_translate.comments" = ["prompt.txt"]
