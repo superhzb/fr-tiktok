@@ -7,8 +7,10 @@ from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Path as FastAPIPath, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, StringConstraints, field_validator
+from sqlalchemy import text
 
 from .config import Config
 from .db import Channel, Comment, Job, Video, get_session
@@ -24,6 +26,7 @@ app.add_middleware(
 )
 
 _config: Config | None = None
+_scheduler = None
 
 
 @app.middleware("http")
@@ -50,10 +53,54 @@ def configure(config: Config) -> None:
         app.mount("/output", StaticFiles(directory=str(output_dir)), name="output")
 
 
+def register_scheduler(scheduler) -> None:
+    """Expose the live scheduler instance to API endpoints."""
+    global _scheduler
+    _scheduler = scheduler
+
+
 def _output_dir() -> Path:
     if _config is None:
         return Path("./output").resolve()
     return _config.output_dir.resolve()
+
+
+def _db_health() -> dict:
+    try:
+        with get_session() as session:
+            session.execute(text("SELECT 1"))
+        return {"status": "ok"}
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+def _scheduler_state_name(state: int | None) -> str:
+    if state == 1:
+        return "running"
+    if state == 2:
+        return "paused"
+    if state == 0:
+        return "stopped"
+    return "unknown"
+
+
+def _scheduler_health() -> dict:
+    if _scheduler is None:
+        return {"status": "not_configured", "running": False, "jobs": 0}
+
+    jobs = _scheduler.get_jobs()
+    next_run_time = None
+    if jobs:
+        next_run = min((job.next_run_time for job in jobs if job.next_run_time), default=None)
+        if next_run is not None:
+            next_run_time = next_run.isoformat()
+
+    return {
+        "status": _scheduler_state_name(getattr(_scheduler, "state", None)),
+        "running": bool(getattr(_scheduler, "running", False)),
+        "jobs": len(jobs),
+        "next_run_time": next_run_time,
+    }
 
 
 VideoId = Annotated[
@@ -161,6 +208,31 @@ def _video_files(v: Video) -> dict:
 
 
 # ── channels ─────────────────────────────────────────────────────────────────
+
+
+@app.get("/health")
+async def health_check():
+    db = _db_health()
+    scheduler = _scheduler_health()
+    if db["status"] != "ok":
+        overall_status = "error"
+        status_code = 503
+    elif _scheduler is not None and not scheduler["running"]:
+        overall_status = "degraded"
+        status_code = 503
+    else:
+        overall_status = "ok"
+        status_code = 200
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": overall_status,
+            "service": "tk-orchestrator",
+            "database": db,
+            "scheduler": scheduler,
+        },
+    )
 
 
 @app.get("/channels")

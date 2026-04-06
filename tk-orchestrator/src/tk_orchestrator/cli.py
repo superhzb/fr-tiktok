@@ -307,12 +307,13 @@ def start(ctx: click.Context, host: str, port: int) -> None:
 async def _start_async(config: Config, host: str, port: int) -> None:
     import uvicorn
 
-    from .api import app, configure
+    from .api import app, configure, register_scheduler
     from .queue import worker
     from .scheduler import setup_scheduler
 
     configure(config)
     scheduler = setup_scheduler(config)
+    register_scheduler(scheduler)
     scheduler.start()
 
     uv_config = uvicorn.Config(app, host=host, port=port, loop="none", log_level="warning")
