@@ -9,6 +9,7 @@ import yaml
 
 _DEFAULT_CONFIG_PATHS = [
     Path("./config.yaml"),
+    Path("./tk-orchestrator/config.yaml"),
     Path("~/.config/tk-orchestrator/config.yaml").expanduser(),
 ]
 
@@ -47,12 +48,21 @@ class Config:
     db_path: Path = dataclasses.field(
         default_factory=lambda: Path("./tk_orchestrator.db").resolve()
     )
+    default_channels: list[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self) -> None:
         if isinstance(self.output_dir, str):
             self.output_dir = Path(self.output_dir).expanduser()
         if isinstance(self.db_path, str):
             self.db_path = Path(self.db_path).expanduser()
+        if self.default_channels is None:
+            self.default_channels = []
+        else:
+            self.default_channels = [
+                str(channel).strip()
+                for channel in self.default_channels
+                if str(channel).strip()
+            ]
 
 
 def load_config(path: Path | None = None) -> Config:

@@ -9,3 +9,7 @@ aligner_model: mlx-community/Qwen3-ForcedAligner-0.6B-8bit
 translate_model: mlx-community/Qwen3-4B-Instruct-2507-4bit
 translate_batch_size: 10
 db_path: ./tk_orchestrator.db
+# Dev-only channels to seed on `tk-orch start` when missing from the DB.
+default_channels:
+  - https://www.tiktok.com/@frances.con.romeo
+  - https://www.tiktok.com/@paulmirabel_

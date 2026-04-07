@@ -18,6 +18,8 @@ For real integration runs, start the orchestrator from the root workspace:
 uv run --package tk-orchestrator tk-orch start
 ```
 
+Developer defaults can be declared in [`tk-orchestrator/config.yaml`](/Users/brett/Documents/GitHub/fr-tiktok/tk-orchestrator/config.yaml) under `default_channels`. Prefer full TikTok URLs there. Those channels are inserted automatically on `tk-orch start` if they are not already present in the database.
+
 ## Dependency Rule
 
 - Each package manages its own direct dependencies in its own `pyproject.toml`.

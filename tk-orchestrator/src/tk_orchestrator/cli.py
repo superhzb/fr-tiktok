@@ -30,6 +30,11 @@ def _extract_username(url: str) -> str:
     return url.lstrip("@")
 
 
+def _normalize_channel_input(value: str) -> tuple[str, str]:
+    username = _extract_username(value.strip())
+    return username, f"https://www.tiktok.com/@{username}"
+
+
 def _parse_tiktok_video_url(url: str) -> tuple[str, str]:
     """Return (username, video_id) from a TikTok video URL."""
     m = re.match(r"https?://(?:www\.)?tiktok\.com/@([^/]+)/video/(\d+)", url)
@@ -39,7 +44,7 @@ def _parse_tiktok_video_url(url: str) -> tuple[str, str]:
 
 
 def _ensure_channel(username: str) -> int:
-    channel_url = f"https://www.tiktok.com/@{username}"
+    _, channel_url = _normalize_channel_input(username)
     with get_session() as s:
         ch = s.query(Channel).filter(Channel.username == username).first()
         if ch:
@@ -48,6 +53,26 @@ def _ensure_channel(username: str) -> int:
         s.add(ch)
         s.flush()
         return ch.id  # type: ignore[return-value]
+
+
+def _seed_default_channels(config: Config) -> int:
+    added = 0
+    if not config.default_channels:
+        return added
+
+    with get_session() as s:
+        existing_usernames = {
+            channel.username for channel in s.query(Channel).all()
+        }
+        for value in config.default_channels:
+            username, channel_url = _normalize_channel_input(value)
+            if username in existing_usernames:
+                continue
+            s.add(Channel(username=username, url=channel_url))
+            existing_usernames.add(username)
+            added += 1
+
+    return added
 
 
 def _ensure_job(video_id: str, channel_id: int, url: str) -> int:
@@ -92,12 +117,12 @@ def channel() -> None:
 def channel_add(ctx: click.Context, url: str) -> None:
     """Add a channel to monitor."""
     config = _bootstrap(ctx.obj.get("config_path"))
-    username = _extract_username(url)
+    username, channel_url = _normalize_channel_input(url)
     with get_session() as s:
         if s.query(Channel).filter(Channel.username == username).first():
             click.echo(f"Channel @{username} is already being monitored.")
             return
-        s.add(Channel(username=username, url=url))
+        s.add(Channel(username=username, url=channel_url))
     click.echo(f"Added @{username}")
 
 
@@ -312,6 +337,7 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     from .scheduler import setup_scheduler
 
     configure(config)
+    seeded_channels = _seed_default_channels(config)
     recovered_jobs = recover_interrupted_jobs()
     scheduler = setup_scheduler(config)
     register_scheduler(scheduler)
@@ -321,6 +347,8 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     server = uvicorn.Server(uv_config)
 
     click.echo(f"tk-orchestrator started  (API: http://{host}:{port})")
+    if seeded_channels:
+        click.echo(f"Seeded {seeded_channels} default channel(s).")
     if recovered_jobs:
         click.echo(f"Recovered {len(recovered_jobs)} interrupted job(s).")
     await asyncio.gather(
