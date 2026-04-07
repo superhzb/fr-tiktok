@@ -22,6 +22,10 @@ coverage/
 *.srt
 *.db
 output/
+tests/output/
+
+# Allow committed fixture files even if they match media patterns above
+!tk-orchestrator/tests/fixtures/**
 
 # OS
 .DS_Store

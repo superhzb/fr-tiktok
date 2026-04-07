@@ -122,6 +122,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         video_url = job.video.url
         channel_username = job.video.channel.username
         previous_status = job.status
+        # Extract scalar fields needed outside this session to avoid DetachedInstanceError
+        job_current_step = job.current_step
+        job_status = job.status
+        job_video_path = job.video_path
+        job_srt_path = job.srt_path
 
     video_dir = config.output_dir / channel_username / video_id
     video_dir.mkdir(parents=True, exist_ok=True)
@@ -132,7 +137,15 @@ async def run_pipeline(job_id: int, config: Config) -> None:
     vtt_path = video_dir / "subtitles.vtt"
 
     job_logger = get_job_logger(job_id, video_dir)
-    resume_step = _resolve_resume_step(job, video_dir)
+
+    # Build a lightweight namespace so _resolve_resume_step doesn't need a live session
+    class _JobSnapshot:
+        current_step = job_current_step
+        status = job_status
+        video_path = job_video_path
+        srt_path = job_srt_path
+
+    resume_step = _resolve_resume_step(_JobSnapshot(), video_dir)
     if previous_status == "interrupted":
         job_logger.info(
             "Resuming interrupted pipeline for job %d (video %s) from %s",
@@ -190,7 +203,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j.current_step = None
                 logger.error("Job %d state changed: running -> failed at %s", job_id, step)
 
-    video_path = Path(job.video_path) if job.video_path else None
+    video_path = Path(job_video_path) if job_video_path else None
     current_step = resume_step
     ctx_env = {"TK_JOB_ID": str(job_id), "TK_VIDEO_ID": video_id}
 

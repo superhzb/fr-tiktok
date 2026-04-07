@@ -1,0 +1,327 @@
+[
+  {
+    "start": 0.0,
+    "end": 0.08,
+    "text": "Je"
+  },
+  {
+    "start": 0.16,
+    "end": 0.24,
+    "text": "peux"
+  },
+  {
+    "start": 0.24,
+    "end": 0.64,
+    "text": "avoir"
+  },
+  {
+    "start": 0.64,
+    "end": 0.8,
+    "text": "un"
+  },
+  {
+    "start": 0.8,
+    "end": 1.12,
+    "text": "soda"
+  },
+  {
+    "start": 1.12,
+    "end": 1.36,
+    "text": "s'il"
+  },
+  {
+    "start": 1.36,
+    "end": 1.36,
+    "text": "te"
+  },
+  {
+    "start": 1.36,
+    "end": 1.6,
+    "text": "plaît"
+  },
+  {
+    "start": 1.84,
+    "end": 2.08,
+    "text": "Une"
+  },
+  {
+    "start": 2.08,
+    "end": 2.72,
+    "text": "canette"
+  },
+  {
+    "start": 2.88,
+    "end": 2.96,
+    "text": "ou"
+  },
+  {
+    "start": 2.96,
+    "end": 3.12,
+    "text": "une"
+  },
+  {
+    "start": 3.12,
+    "end": 3.68,
+    "text": "bouteille"
+  },
+  {
+    "start": 4.0,
+    "end": 4.32,
+    "text": "Quoi"
+  },
+  {
+    "start": 4.96,
+    "end": 5.12,
+    "text": "Une"
+  },
+  {
+    "start": 5.12,
+    "end": 5.84,
+    "text": "canette"
+  },
+  {
+    "start": 6.16,
+    "end": 6.24,
+    "text": "ou"
+  },
+  {
+    "start": 6.24,
+    "end": 6.4,
+    "text": "une"
+  },
+  {
+    "start": 6.4,
+    "end": 7.12,
+    "text": "bouteille"
+  },
+  {
+    "start": 7.52,
+    "end": 8.24,
+    "text": "Ah"
+  },
+  {
+    "start": 8.56,
+    "end": 8.88,
+    "text": "une"
+  },
+  {
+    "start": 9.04,
+    "end": 9.36,
+    "text": "canette"
+  },
+  {
+    "start": 9.36,
+    "end": 9.6,
+    "text": "s'il"
+  },
+  {
+    "start": 9.6,
+    "end": 9.6,
+    "text": "te"
+  },
+  {
+    "start": 9.6,
+    "end": 9.92,
+    "text": "plaît"
+  },
+  {
+    "start": 10.08,
+    "end": 10.24,
+    "text": "Tu"
+  },
+  {
+    "start": 10.24,
+    "end": 10.48,
+    "text": "aurais"
+  },
+  {
+    "start": 10.48,
+    "end": 10.96,
+    "text": "un"
+  },
+  {
+    "start": 12.88,
+    "end": 13.04,
+    "text": "Un"
+  },
+  {
+    "start": 13.04,
+    "end": 13.44,
+    "text": "verre"
+  },
+  {
+    "start": 13.68,
+    "end": 13.92,
+    "text": "Ouais"
+  },
+  {
+    "start": 14.4,
+    "end": 14.56,
+    "text": "un"
+  },
+  {
+    "start": 14.56,
+    "end": 15.04,
+    "text": "verre"
+  },
+  {
+    "start": 15.44,
+    "end": 15.92,
+    "text": "Merci"
+  },
+  {
+    "start": 16.16,
+    "end": 16.56,
+    "text": "Et"
+  },
+  {
+    "start": 16.64,
+    "end": 16.88,
+    "text": "je"
+  },
+  {
+    "start": 16.88,
+    "end": 17.04,
+    "text": "peux"
+  },
+  {
+    "start": 17.04,
+    "end": 17.6,
+    "text": "avoir"
+  },
+  {
+    "start": 17.6,
+    "end": 17.84,
+    "text": "les"
+  },
+  {
+    "start": 17.84,
+    "end": 18.24,
+    "text": "petits"
+  },
+  {
+    "start": 18.24,
+    "end": 18.64,
+    "text": "cubes"
+  },
+  {
+    "start": 18.8,
+    "end": 19.36,
+    "text": "froids"
+  },
+  {
+    "start": 19.6,
+    "end": 19.92,
+    "text": "Des"
+  },
+  {
+    "start": 19.92,
+    "end": 20.4,
+    "text": "glaçons"
+  },
+  {
+    "start": 20.72,
+    "end": 20.96,
+    "text": "Ouais"
+  },
+  {
+    "start": 21.36,
+    "end": 21.76,
+    "text": "Deux"
+  },
+  {
+    "start": 21.92,
+    "end": 22.16,
+    "text": "s'il"
+  },
+  {
+    "start": 22.16,
+    "end": 22.24,
+    "text": "te"
+  },
+  {
+    "start": 22.24,
+    "end": 22.56,
+    "text": "plaît"
+  },
+  {
+    "start": 22.88,
+    "end": 23.52,
+    "text": "Et"
+  },
+  {
+    "start": 23.68,
+    "end": 23.84,
+    "text": "je"
+  },
+  {
+    "start": 23.84,
+    "end": 24.0,
+    "text": "peux"
+  },
+  {
+    "start": 24.0,
+    "end": 24.32,
+    "text": "avoir"
+  },
+  {
+    "start": 24.32,
+    "end": 24.48,
+    "text": "une"
+  },
+  {
+    "start": 25.76,
+    "end": 25.92,
+    "text": "Une"
+  },
+  {
+    "start": 25.92,
+    "end": 26.48,
+    "text": "paille"
+  },
+  {
+    "start": 26.64,
+    "end": 26.96,
+    "text": "Ouais"
+  },
+  {
+    "start": 27.76,
+    "end": 27.92,
+    "text": "une"
+  },
+  {
+    "start": 27.92,
+    "end": 28.24,
+    "text": "paille"
+  },
+  {
+    "start": 28.64,
+    "end": 29.04,
+    "text": "Et"
+  },
+  {
+    "start": 29.04,
+    "end": 29.28,
+    "text": "quoi"
+  },
+  {
+    "start": 29.28,
+    "end": 29.84,
+    "text": "encore"
+  },
+  {
+    "start": 30.0,
+    "end": 30.32,
+    "text": "Non"
+  },
+  {
+    "start": 30.48,
+    "end": 30.8,
+    "text": "rien"
+  },
+  {
+    "start": 31.6,
+    "end": 32.16,
+    "text": "Santé"
+  }
+]

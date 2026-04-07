@@ -30,6 +30,16 @@ tk-orch = "tk_orchestrator.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/tk_orchestrator"]
 
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
 # Local editable installs for development
 # Install with: pip install -e . --config-settings editable_mode=strict
 # After installing all sibling packages as editable:
