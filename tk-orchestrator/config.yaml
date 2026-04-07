@@ -11,5 +11,33 @@ translate_batch_size: 10
 db_path: ./tk_orchestrator.db
 # Dev-only channels to seed on `tk-orch start` when missing from the DB.
 default_channels:
-  - https://www.tiktok.com/@frances.con.romeo
+  - https://www.tiktok.com/@pitchounes.tv
+  - https://www.tiktok.com/@24heuresca
+  - https://www.tiktok.com/@rmc_off
   - https://www.tiktok.com/@paulmirabel_
+  - https://www.tiktok.com/@estherhm25
+  - https://www.tiktok.com/@monsieurcompliment
+  - https://www.tiktok.com/@reel.0ff
+  - https://www.tiktok.com/@boolange6
+  - https://www.tiktok.com/@qub_radio
+  - https://www.tiktok.com/@dansloeildudragon
+  - https://www.tiktok.com/@lp_lapresse
+  - https://www.tiktok.com/@brutofficiel
+  - https://www.tiktok.com/@bfmtv
+  - https://www.tiktok.com/@radio.canada.toronto
+  - https://www.tiktok.com/@canalplus
+  - https://www.tiktok.com/@ladepechedumidi
+  - https://www.tiktok.com/@francaisfacileavecf
+  - https://www.tiktok.com/@france24
+  - https://www.tiktok.com/@radio.canada.info
+  - https://www.tiktok.com/@montreuxcomedy
+  - https://www.tiktok.com/@frenchwithfelix
+  - https://www.tiktok.com/@france.inter
+  - https://www.tiktok.com/@energie94.3
+  - https://www.tiktok.com/@radio.canada
+  - https://www.tiktok.com/@alex_traordinaire
+  - https://www.tiktok.com/@vaguealame
+  - https://www.tiktok.com/@sebtrudelradio
+  - https://www.tiktok.com/@learneverydayfrench
+  - https://www.tiktok.com/@plan.b.42
+  - https://www.tiktok.com/@frances.con.romeo
