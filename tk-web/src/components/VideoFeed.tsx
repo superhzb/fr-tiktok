@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
-import type { Video } from '../types'
+import { useEffect, useRef } from 'react'
 import { SubtitleSettingsProvider } from '../context/SubtitleSettingsContext'
+import { useSmartFeed } from '../context/SmartFeedContext'
 import VideoPlayer from './VideoPlayer'
 
-interface Props {
-  videos: Video[]
-}
+export default function VideoFeed() {
+  const {
+    orderedFeed,
+    activeIndex,
+    setActiveIndex,
+    updatePlayProgress,
+    markLoopCompleted,
+    blobUrlFor,
+    getSessionState,
+  } = useSmartFeed()
 
-export default function VideoFeed({ videos }: Props) {
-  const [activeIndex, setActiveIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export default function VideoFeed({ videos }: Props) {
     items.forEach(el => observer.observe(el))
 
     return () => observer.disconnect()
-  }, [videos])
+  }, [orderedFeed, setActiveIndex])
 
   return (
     <SubtitleSettingsProvider>
@@ -40,13 +45,20 @@ export default function VideoFeed({ videos }: Props) {
         className="h-full overflow-y-scroll snap-y snap-mandatory"
         style={{ scrollbarWidth: 'none' }}
       >
-        {videos.map((video, i) => (
+        {orderedFeed.map((video, i) => (
           <div
             key={video.id}
             data-index={i}
             className="w-full h-full snap-start snap-always shrink-0"
           >
-            <VideoPlayer video={video} active={i === activeIndex} />
+            <VideoPlayer
+              video={video}
+              active={i === activeIndex}
+              blobSrc={blobUrlFor(video.id)}
+              sessionState={getSessionState(video.id)}
+              onPlayProgress={updatePlayProgress}
+              onLoopComplete={markLoopCompleted}
+            />
           </div>
         ))}
       </div>

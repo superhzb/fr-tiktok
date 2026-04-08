@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
-import type { Video } from '../types'
+import type { Video, VideoSessionState } from '../types'
 import { fileUrl } from '../api'
 import { useVtt } from '../hooks/useVtt'
 import { useWakeLock } from '../hooks/useWakeLock'
@@ -11,9 +11,20 @@ import SubtitleSettingsPanel from './SubtitleSettingsPanel'
 interface Props {
   video: Video
   active: boolean
+  blobSrc?: string | null
+  sessionState?: VideoSessionState
+  onPlayProgress?: (videoId: string, currentTime: number, duration: number) => void
+  onLoopComplete?: (videoId: string) => void
 }
 
-export default function VideoPlayer({ video, active }: Props) {
+export default function VideoPlayer({
+  video,
+  active,
+  blobSrc,
+  sessionState,
+  onPlayProgress,
+  onLoopComplete,
+}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -25,7 +36,12 @@ export default function VideoPlayer({ video, active }: Props) {
   const progressRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
 
-  const videoSrc = fileUrl(video.files.video_url)
+  const hasReportedLoop = useRef(false)
+  const lastReportedSecond = useRef(-1)
+
+  const networkSrc = fileUrl(video.files.video_url)
+  const videoSrc = blobSrc ?? networkSrc
+
   const vttSrc = fileUrl(video.files.vtt_url)
   const cues = useVtt(vttSrc)
 
@@ -34,18 +50,60 @@ export default function VideoPlayer({ video, active }: Props) {
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
+
     if (active) {
+      const direction = sessionState?.direction ?? 'forward'
+      const savedPos = sessionState?.savedPosition ?? 0
+      const dur = el.duration || 0
+
+      if (direction === 'back' && dur > 0) {
+        const percentPlayed = dur > 0 ? (savedPos / dur) * 100 : 0
+        if (percentPlayed >= 90) {
+          el.currentTime = 0
+        } else {
+          el.currentTime = savedPos
+        }
+      } else {
+        el.currentTime = 0
+      }
+
       el.play().catch(() => {})
       setPaused(false)
+
+      hasReportedLoop.current = false
+      lastReportedSecond.current = -1
     } else {
       el.pause()
-      el.currentTime = 0
     }
-  }, [active])
+  }, [active, sessionState])
 
   const handleTimeUpdate = useCallback(() => {
-    setCurrentTime(videoRef.current?.currentTime ?? 0)
-  }, [])
+    const el = videoRef.current
+    if (!el) return
+
+    const ct = el.currentTime
+    const dur = el.duration
+    setCurrentTime(ct)
+
+    if (!dur || !isFinite(dur)) return
+
+    const flooredSecond = Math.floor(ct)
+    if (flooredSecond !== lastReportedSecond.current) {
+      lastReportedSecond.current = flooredSecond
+      onPlayProgress?.(video.id, ct, dur)
+    }
+
+    const percentage = (ct / dur) * 100
+
+    if (percentage >= 95 && !hasReportedLoop.current) {
+      hasReportedLoop.current = true
+      onLoopComplete?.(video.id)
+    }
+
+    if (percentage < 10) {
+      hasReportedLoop.current = false
+    }
+  }, [video.id, onPlayProgress, onLoopComplete])
 
   const handleLoadedMetadata = useCallback(() => {
     setDuration(videoRef.current?.duration ?? 0)
@@ -90,7 +148,6 @@ export default function VideoPlayer({ video, active }: Props) {
     if (!commentsOpen) return
     const dx = e.changedTouches[0].clientX - touchStartX.current
     const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current)
-    // Left-edge swipe: starts within 30px of left, moves right >60px, not too vertical
     if (touchStartX.current < 30 && dx > 60 && dy < 80) {
       setCommentsOpen(false)
     }
@@ -131,12 +188,11 @@ export default function VideoPlayer({ video, active }: Props) {
       {paused && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center">
-            <span className="text-white text-3xl">▶</span>
+            <span className="text-white text-3xl">&#9654;</span>
           </div>
         </div>
       )}
 
-      {/* Progress bar */}
       <div
         ref={progressRef}
         className="absolute left-0 right-0 h-1 cursor-pointer group"
@@ -144,11 +200,8 @@ export default function VideoPlayer({ video, active }: Props) {
         onMouseDown={handleProgressMouseDown}
         onTouchStart={handleProgressTouchStart}
       >
-        {/* hit area padding */}
         <div className="absolute inset-x-0 -top-2 bottom-0" />
-        {/* track */}
         <div className="absolute inset-0 bg-white/20" />
-        {/* fill */}
         <div
           className="absolute inset-y-0 left-0 bg-white/70 transition-none"
           style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}

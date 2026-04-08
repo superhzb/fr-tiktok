@@ -51,3 +51,17 @@ export interface SubtitleCue {
   fr: string
   zh: string
 }
+
+/** Saved to IndexedDB — survives app restarts */
+export interface VideoPlayStats {
+  videoId: string
+  playPercentage: number   // 0 to 100, the furthest point the user reached
+  loopCount: number        // how many times the video was watched to >=95%
+  seen: boolean            // true once the video has been watched to >=95%
+}
+
+/** Only lives in memory — lost when app closes */
+export interface VideoSessionState {
+  savedPosition: number    // the timestamp (in seconds) where user left off
+  direction: 'forward' | 'back' | null  // how the user scrolled to this video
+}

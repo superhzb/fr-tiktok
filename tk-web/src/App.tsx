@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchVideos } from './api'
 import type { Video } from './types'
+import { SmartFeedProvider } from './context/SmartFeedContext'
 import VideoFeed from './components/VideoFeed'
 
 export default function App() {
@@ -43,7 +44,9 @@ export default function App() {
     <div className="w-screen bg-black overflow-hidden" style={{ height: '100dvh' }}>
       {/* Centered card on desktop */}
       <div className="h-full max-w-sm mx-auto relative">
-        <VideoFeed videos={videos} />
+        <SmartFeedProvider videos={videos}>
+          <VideoFeed />
+        </SmartFeedProvider>
       </div>
     </div>
   )
