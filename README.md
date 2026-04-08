@@ -8,6 +8,8 @@ Create the shared environment from the repo root:
 
 ```bash
 uv sync --locked --all-packages
+cd tk-web && npm install && cd ..
+uv run --package tk-channel-checker playwright install chromium
 ```
 
 ## Run Orchestrator

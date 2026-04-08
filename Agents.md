@@ -13,6 +13,7 @@ This repo is an application workspace, not a set of independently released libra
 # Package Layout Rule
 
 - All Python packages must use `src/` layout: source code lives under `src/<package_name>/`, not at the project root.
+- For all new packages, follow the full package standard in [`docs/package-creation-standard.md`](/Users/brett/Documents/GitHub/fr-tiktok/docs/package-creation-standard.md).
 
 # Build System Rule
 
@@ -30,26 +31,11 @@ This repo is an application workspace, not a set of independently released libra
 
 # CLI Logging Contract
 
-All service CLIs must follow this contract so the orchestrator can attribute failures to the right package, job, and pipeline step.
+All service CLIs must follow this contract:
 
-**stdout** — tool result only (JSON or file path). No log lines, status messages, or progress output.
-
-**stderr** — logs only, one JSON object per line. Each log entry must include:
-
-```json
-{"time": "...", "level": "INFO", "service": "tk-stt", "event": "tk_stt.cli", "message": "..."}
-```
-
-Required fields: `time` (ISO 8601 UTC), `level`, `service` (the package name, e.g. `"tk-stt"`), `event` (the Python logger name), `message`.
-
-**Orchestrator context** — when the env vars below are present, include them in every log entry:
-
-| Env var | Log field | Set by |
-|---|---|---|
-| `TK_JOB_ID` | `job_id` | tk-orchestrator |
-| `TK_VIDEO_ID` | `video_id` | tk-orchestrator |
-| `TK_PIPELINE_STEP` | `pipeline_step` | tk-orchestrator |
-
-**Implementation** — each package owns its own small `_JSONFormatter` class in `cli.py`. Do not create a shared repo-level logging package. Duplication is intentional so packages stay independent.
-
-**Failure logs** — before exiting with a non-zero code, log at least one `ERROR` entry that makes it obvious which service failed and why.
+- `stdout` is tool output only: JSON, file path, or empty when writing to a file.
+- `stderr` is logs only: one JSON object per line.
+- Every log entry must include `time`, `level`, `service`, `event`, and `message`.
+- When present, propagate `TK_JOB_ID`, `TK_VIDEO_ID`, and `TK_PIPELINE_STEP` as `job_id`, `video_id`, and `pipeline_step`.
+- Each package owns its own `_JSONFormatter` in `cli.py`; do not create a shared repo-level logging package.
+- Before exiting non-zero, log at least one `ERROR` entry that makes the failure obvious.
