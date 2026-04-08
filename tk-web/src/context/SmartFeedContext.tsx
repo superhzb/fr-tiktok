@@ -40,11 +40,16 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
   const [activeIndex, setActiveIndexState] = useState(0)
   const [ready, setReady] = useState(false)
 
+  const [blobRevision, setBlobRevision] = useState(0)
+
   const statsMapRef = useRef(new Map<string, VideoPlayStats>())
   const sessionMapRef = useRef(new Map<string, VideoSessionState>())
   const dirtyIdsRef = useRef(new Set<string>())
   const cacheManagerRef = useRef(new VideoCacheManager())
   const prevIndexRef = useRef(0)
+
+  // Notify React whenever a new blob URL lands so blobUrlFor re-reads the map
+  cacheManagerRef.current.onReady = () => setBlobRevision(r => r + 1)
 
   useEffect(() => {
     let cancelled = false
@@ -169,7 +174,9 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
 
   const blobUrlFor = useCallback((videoId: string): string | null => {
     return cacheManagerRef.current.getObjectUrl(videoId)
-  }, [])
+  // blobRevision changes whenever a new object URL is ready, triggering a re-render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blobRevision])
 
   const getSessionState = useCallback((videoId: string): VideoSessionState => {
     return sessionMapRef.current.get(videoId) ?? { savedPosition: 0, direction: null }

@@ -10,6 +10,8 @@ export class VideoCacheManager {
   private readonly LOOK_AHEAD = 5
   private readonly LOOK_BEHIND = 2
 
+  onReady: ((videoId: string, objectUrl: string) => void) | null = null
+
   updateWindow(activeIndex: number, orderedFeed: Video[]): void {
     const keepStart = Math.max(0, activeIndex - this.LOOK_BEHIND)
     const keepEnd = Math.min(orderedFeed.length - 1, activeIndex + this.LOOK_AHEAD)
@@ -69,6 +71,7 @@ export class VideoCacheManager {
       const blob = await response.blob()
       const objectUrl = URL.createObjectURL(blob)
       this.objectUrls.set(video.id, objectUrl)
+      this.onReady?.(video.id, objectUrl)
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.warn(`Failed to cache video ${video.id}:`, err)
