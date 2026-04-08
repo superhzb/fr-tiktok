@@ -1,8 +1,11 @@
 import type { Video } from '../types'
 import { fileUrl } from '../api'
 
+const CACHE_NAME = 'video-cache-v1'
+
 export class VideoCacheManager {
-  private cache = new Map<string, { blob: Blob; objectUrl: string }>()
+  // Session-only: object URLs are in-memory and must be re-created each app open
+  private objectUrls = new Map<string, string>()
   private pending = new Map<string, AbortController>()
   private readonly LOOK_AHEAD = 5
   private readonly LOOK_BEHIND = 2
@@ -16,13 +19,15 @@ export class VideoCacheManager {
       keepIds.add(orderedFeed[i].id)
     }
 
-    for (const [videoId, entry] of this.cache) {
+    // Revoke object URLs for videos leaving the window
+    for (const [videoId, objectUrl] of this.objectUrls) {
       if (!keepIds.has(videoId)) {
-        URL.revokeObjectURL(entry.objectUrl)
-        this.cache.delete(videoId)
+        URL.revokeObjectURL(objectUrl)
+        this.objectUrls.delete(videoId)
       }
     }
 
+    // Abort in-flight fetches for videos leaving the window
     for (const [videoId, controller] of this.pending) {
       if (!keepIds.has(videoId)) {
         controller.abort()
@@ -32,17 +37,17 @@ export class VideoCacheManager {
 
     for (let i = keepStart; i <= keepEnd; i++) {
       const video = orderedFeed[i]
-      if (!this.cache.has(video.id) && !this.pending.has(video.id)) {
-        this.fetchAndCache(video)
+      if (!this.objectUrls.has(video.id) && !this.pending.has(video.id)) {
+        this.ensureCached(video)
       }
     }
   }
 
   getObjectUrl(videoId: string): string | null {
-    return this.cache.get(videoId)?.objectUrl ?? null
+    return this.objectUrls.get(videoId) ?? null
   }
 
-  private async fetchAndCache(video: Video): Promise<void> {
+  private async ensureCached(video: Video): Promise<void> {
     const url = fileUrl(video.files.video_url)
     if (!url) return
 
@@ -50,13 +55,20 @@ export class VideoCacheManager {
     this.pending.set(video.id, controller)
 
     try {
-      const res = await fetch(url, { signal: controller.signal })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const diskCache = await caches.open(CACHE_NAME)
+      let response = await diskCache.match(url)
 
-      const blob = await res.blob()
+      if (!response) {
+        // Not on disk — fetch from network and store
+        const fetched = await fetch(url, { signal: controller.signal })
+        if (!fetched.ok) throw new Error(`HTTP ${fetched.status}`)
+        await diskCache.put(url, fetched.clone())
+        response = fetched
+      }
+
+      const blob = await response.blob()
       const objectUrl = URL.createObjectURL(blob)
-
-      this.cache.set(video.id, { blob, objectUrl })
+      this.objectUrls.set(video.id, objectUrl)
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.warn(`Failed to cache video ${video.id}:`, err)
@@ -72,9 +84,11 @@ export class VideoCacheManager {
     }
     this.pending.clear()
 
-    for (const entry of this.cache.values()) {
-      URL.revokeObjectURL(entry.objectUrl)
+    // Revoke all session object URLs — but intentionally leave Cache API entries
+    // intact so next session can skip the network fetch
+    for (const objectUrl of this.objectUrls.values()) {
+      URL.revokeObjectURL(objectUrl)
     }
-    this.cache.clear()
+    this.objectUrls.clear()
   }
 }
