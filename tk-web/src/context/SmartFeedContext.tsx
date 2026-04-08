@@ -10,7 +10,6 @@ import {
 import type { Video, VideoPlayStats, VideoSessionState } from '../types'
 import { getAllStats, putManyStats } from '../lib/playStatsDb'
 import { sortFeed } from '../lib/feedSort'
-import { VideoCacheManager } from '../lib/videoCacheManager'
 
 interface SmartFeedContextValue {
   orderedFeed: Video[]
@@ -18,7 +17,6 @@ interface SmartFeedContextValue {
   setActiveIndex: (index: number) => void
   updatePlayProgress: (videoId: string, currentTime: number, duration: number) => void
   markLoopCompleted: (videoId: string) => void
-  blobUrlFor: (videoId: string) => string | null
   getSessionState: (videoId: string) => VideoSessionState
 }
 
@@ -40,16 +38,10 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
   const [activeIndex, setActiveIndexState] = useState(0)
   const [ready, setReady] = useState(false)
 
-  const [blobRevision, setBlobRevision] = useState(0)
-
   const statsMapRef = useRef(new Map<string, VideoPlayStats>())
   const sessionMapRef = useRef(new Map<string, VideoSessionState>())
   const dirtyIdsRef = useRef(new Set<string>())
-  const cacheManagerRef = useRef(new VideoCacheManager())
   const prevIndexRef = useRef(0)
-
-  // Notify React whenever a new blob URL lands so blobUrlFor re-reads the map
-  cacheManagerRef.current.onReady = () => setBlobRevision(r => r + 1)
 
   useEffect(() => {
     let cancelled = false
@@ -66,14 +58,11 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
       const sorted = sortFeed(videos, map)
       setOrderedFeed(sorted)
       setReady(true)
-
-      cacheManagerRef.current.updateWindow(0, sorted)
     }).catch(err => {
       console.warn('Failed to load play stats, using unsorted feed:', err)
       if (!cancelled) {
         setOrderedFeed(videos)
         setReady(true)
-        cacheManagerRef.current.updateWindow(0, videos)
       }
     })
 
@@ -111,7 +100,6 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       flushStats()
-      cacheManagerRef.current.destroy()
     }
   }, [flushStats])
 
@@ -131,8 +119,6 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
 
     prevIndexRef.current = index
     setActiveIndexState(index)
-
-    cacheManagerRef.current.updateWindow(index, feed)
   }, [orderedFeed])
 
   const updatePlayProgress = useCallback((
@@ -172,12 +158,6 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
     dirtyIdsRef.current.add(videoId)
   }, [])
 
-  const blobUrlFor = useCallback((videoId: string): string | null => {
-    return cacheManagerRef.current.getObjectUrl(videoId)
-  // blobRevision changes whenever a new object URL is ready, triggering a re-render
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blobRevision])
-
   const getSessionState = useCallback((videoId: string): VideoSessionState => {
     return sessionMapRef.current.get(videoId) ?? { savedPosition: 0, direction: null }
   }, [])
@@ -192,7 +172,6 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
         setActiveIndex,
         updatePlayProgress,
         markLoopCompleted,
-        blobUrlFor,
         getSessionState,
       }}
     >

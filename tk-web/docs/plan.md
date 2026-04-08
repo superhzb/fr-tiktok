@@ -1,7 +1,7 @@
 
 **Task: Build a TikTok-style video learning app (prototype)**
 
-**Stack:** Vite + React + TypeScript + Tailwind CSS + PWA
+**Stack:** Vite + React + TypeScript + Tailwind CSS
 
 **What it does:**
 A vertical swipe video feed (like TikTok) that plays short French-learning videos with bilingual subtitles (French/Chinese). Users can swipe through videos, toggle subtitle languages, and view translated comments.
@@ -13,8 +13,6 @@ A vertical swipe video feed (like TikTok) that plays short French-learning video
 - **ChannelBar** — author info + stats overlay on each video
 
 **Data source:** FastAPI backend serving video metadata, comments, and static files (mp4, vtt). All endpoints under `/api/videos`.
-
-**PWA:** Add `manifest.json` + basic service worker so it can be installed as a full-screen app on mobile.
 
 **Design target:** Full-screen on mobile, centered card on desktop. Responsive.
 

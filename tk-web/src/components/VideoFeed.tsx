@@ -10,7 +10,6 @@ export default function VideoFeed() {
     setActiveIndex,
     updatePlayProgress,
     markLoopCompleted,
-    blobUrlFor,
     getSessionState,
   } = useSmartFeed()
 
@@ -54,7 +53,6 @@ export default function VideoFeed() {
             <VideoPlayer
               video={video}
               active={i === activeIndex}
-              blobSrc={blobUrlFor(video.id)}
               sessionState={getSessionState(video.id)}
               onPlayProgress={updatePlayProgress}
               onLoopComplete={markLoopCompleted}

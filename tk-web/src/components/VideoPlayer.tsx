@@ -11,7 +11,6 @@ import SubtitleSettingsPanel from './SubtitleSettingsPanel'
 interface Props {
   video: Video
   active: boolean
-  blobSrc?: string | null
   sessionState?: VideoSessionState
   onPlayProgress?: (videoId: string, currentTime: number, duration: number) => void
   onLoopComplete?: (videoId: string) => void
@@ -20,7 +19,6 @@ interface Props {
 export default function VideoPlayer({
   video,
   active,
-  blobSrc,
   sessionState,
   onPlayProgress,
   onLoopComplete,
@@ -39,9 +37,7 @@ export default function VideoPlayer({
   const hasReportedLoop = useRef(false)
   const lastReportedSecond = useRef(-1)
 
-  const networkSrc = fileUrl(video.files.video_url)
-  const videoSrc = blobSrc ?? networkSrc
-
+  const videoSrc = fileUrl(video.files.video_url)
   const vttSrc = fileUrl(video.files.vtt_url)
   const cues = useVtt(vttSrc)
 
