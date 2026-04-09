@@ -37,7 +37,8 @@ export default function VideoPlayer({
   const hasReportedLoop = useRef(false)
   const lastReportedSecond = useRef(-1)
 
-  const videoSrc = fileUrl(video.files.video_url)
+  const videoSrc = fileUrl(video.files.video_url) ?? ''
+
   const vttSrc = fileUrl(video.files.vtt_url)
   const cues = useVtt(vttSrc)
 

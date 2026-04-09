@@ -26,7 +26,7 @@ export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Pr
         {/* Likes */}
         <div className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-white text-lg">❤️</span>
+            <span className="text-white text-lg">&#10084;&#65039;</span>
           </div>
           <span className="text-white text-xs mt-1">{fmt(video.likes)}</span>
         </div>
@@ -34,7 +34,7 @@ export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Pr
         {/* Comments */}
         <button onClick={onCommentsOpen} className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-white text-lg">💬</span>
+            <span className="text-white text-lg">&#128172;</span>
           </div>
           <span className="text-white text-xs mt-1">{fmt(video.comments_count)}</span>
         </button>
@@ -42,7 +42,7 @@ export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Pr
         {/* Settings */}
         <button onClick={onSettingsOpen} className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-white text-lg">⚙️</span>
+            <span className="text-white text-lg">&#9881;</span>
           </div>
         </button>
       </div>
