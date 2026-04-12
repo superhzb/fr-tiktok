@@ -8,9 +8,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from sqlalchemy import or_
 
 from ..config import Config
-from ..models import Channel, Comment, Job, Video, get_session
+from ..models import Channel, Comment, Job, Video, WatchProgress, get_session
+from ..video_retention import delete_video_and_files
 from .subprocess import run_cli
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,132 @@ def _channel_video_count(channel_id: int) -> int:
 def _total_video_count() -> int:
     with get_session() as s:
         return s.query(Video).count()
+
+
+def _watched_video_count() -> int:
+    with get_session() as s:
+        return (
+            s.query(Video)
+            .join(WatchProgress, Video.id == WatchProgress.video_id)
+            .filter(
+                or_(
+                    WatchProgress.seen.is_(True),
+                    WatchProgress.loop_count >= 1,
+                )
+            )
+            .count()
+        )
+
+
+def _watched_ratio() -> float:
+    total = _total_video_count()
+    if total == 0:
+        return 0.0
+    return _watched_video_count() / total
+
+
+def _select_retention_candidates(config: Config, limit: int) -> list[str]:
+    with get_session() as s:
+        watched_completed = (
+            s.query(Video)
+            .join(WatchProgress, Video.id == WatchProgress.video_id)
+            .join(Job, Job.video_id == Video.id)
+            .filter(Job.status == "completed")
+            .filter(
+                or_(
+                    WatchProgress.seen.is_(True),
+                    WatchProgress.loop_count >= 1,
+                )
+            )
+            .distinct()
+            .all()
+        )
+
+        channel_newest: dict[int, set[str]] = {}
+        for v in watched_completed:
+            newest_videos = (
+                s.query(Video)
+                .filter(Video.channel_id == v.channel_id)
+                .order_by(Video.discovered_at.desc())
+                .limit(config.retention_keep_newest_per_channel)
+                .all()
+            )
+            channel_newest[v.channel_id] = {nv.id for nv in newest_videos}
+
+        eligible = []
+        for v in watched_completed:
+            if v.id in channel_newest.get(v.channel_id, set()):
+                continue
+            if config.retention_min_age_hours > 0 and v.discovered_at:
+                discovered = v.discovered_at
+                if discovered.tzinfo is None:
+                    discovered = discovered.replace(tzinfo=timezone.utc)
+                age_hours = (
+                    datetime.now(timezone.utc) - discovered
+                ).total_seconds() / 3600
+                if age_hours < config.retention_min_age_hours:
+                    continue
+            eligible.append(v)
+
+        _NAIVE_MIN = datetime.min
+
+        def _sort_key(v: Video):
+            wp = v.watch_progress
+            loops = -(wp.loop_count or 0) if wp else 0
+            updated = wp.updated_at if wp and wp.updated_at else _NAIVE_MIN
+            if updated.tzinfo is not None:
+                updated = updated.replace(tzinfo=None)
+            discovered = v.discovered_at or _NAIVE_MIN
+            if discovered.tzinfo is not None:
+                discovered = discovered.replace(tzinfo=None)
+            return (loops, updated, discovered)
+
+        eligible.sort(key=_sort_key)
+
+        return [v.id for v in eligible[:limit]]
+
+
+def _run_retention_if_needed(config: Config) -> int:
+    if not config.retention_enabled:
+        return 0
+
+    total = _total_video_count()
+    if total == 0:
+        return 0
+
+    watched = _watched_video_count()
+    ratio = watched / total
+
+    logger.info(
+        "Retention evaluation: total=%d watched=%d ratio=%.2f threshold=%.2f",
+        total,
+        watched,
+        ratio,
+        config.retention_watched_ratio_threshold,
+    )
+
+    if ratio < config.retention_watched_ratio_threshold:
+        logger.info(
+            "Retention skipped: ratio %.2f below threshold %.2f",
+            ratio,
+            config.retention_watched_ratio_threshold,
+        )
+        return 0
+
+    candidates = _select_retention_candidates(
+        config, config.retention_delete_batch_size
+    )
+    logger.info("Retention candidates: %d", len(candidates))
+
+    deleted = 0
+    output_dir = config.output_dir.resolve()
+    for video_id in candidates:
+        if delete_video_and_files(video_id, output_dir):
+            deleted += 1
+            logger.info("Retention deleted video %s", video_id)
+
+    logger.info("Retention completed: deleted=%d", deleted)
+    return deleted
 
 
 async def _find_new_videos(channel_url: str, config: Config) -> list[dict]:
@@ -331,6 +459,8 @@ async def poll_all_channels(config: Config) -> None:
         max(config.max_videos_total, max(config.max_videos_per_channel, 1)),
         max(config.videos_per_poll, 1),
     )
+
+    _run_retention_if_needed(config)
 
     for channel_id, username, channel_url in channel_infos:
         result = await poll_channel(channel_id, username, channel_url, config)

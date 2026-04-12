@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +27,7 @@ from ..models import (
     WatchProgressRequest,
     WatchProgressResponse,
 )
+from ..video_retention import delete_video_and_files
 
 app = FastAPI(title="tk-orchestrator", version="0.1.0")
 logger = logging.getLogger(__name__)
@@ -419,12 +419,7 @@ async def delete_video(
         if not v:
             raise HTTPException(404, "Video not found")
 
-        channel_username = v.channel.username if v.channel else v.author
-        s.delete(v)
-
-    if channel_username:
-        video_dir = _output_dir() / channel_username / video_id
-        if video_dir.is_dir():
-            shutil.rmtree(video_dir)
-
+    deleted = delete_video_and_files(video_id, _output_dir())
+    if not deleted:
+        raise HTTPException(404, "Video not found")
     return {"status": "deleted", "video_id": video_id}

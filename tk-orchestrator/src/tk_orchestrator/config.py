@@ -13,6 +13,11 @@ _DEFAULT_CONFIG_PATHS = [
     Path("~/.config/tk-orchestrator/config.yaml").expanduser(),
 ]
 
+
+def _parse_bool(val: str) -> bool:
+    return val.strip().lower() in ("1", "true", "yes")
+
+
 _ENV_MAP: dict[str, tuple[str, type]] = {
     "TK_POLL_INTERVAL_SECONDS": ("poll_interval_seconds", int),
     "TK_OUTPUT_DIR": ("output_dir", Path),
@@ -28,15 +33,24 @@ _ENV_MAP: dict[str, tuple[str, type]] = {
     "TK_TRANSLATE_MODEL": ("translate_model", str),
     "TK_TRANSLATE_BATCH_SIZE": ("translate_batch_size", int),
     "TK_DB_PATH": ("db_path", Path),
+    "TK_RETENTION_ENABLED": ("retention_enabled", _parse_bool),
+    "TK_RETENTION_WATCHED_RATIO_THRESHOLD": (
+        "retention_watched_ratio_threshold",
+        float,
+    ),
+    "TK_RETENTION_DELETE_BATCH_SIZE": ("retention_delete_batch_size", int),
+    "TK_RETENTION_KEEP_NEWEST_PER_CHANNEL": (
+        "retention_keep_newest_per_channel",
+        int,
+    ),
+    "TK_RETENTION_MIN_AGE_HOURS": ("retention_min_age_hours", int),
 }
 
 
 @dataclasses.dataclass
 class Config:
     poll_interval_seconds: int = 60
-    output_dir: Path = dataclasses.field(
-        default_factory=lambda: Path("./output")
-    )
+    output_dir: Path = dataclasses.field(default_factory=lambda: Path("./output"))
     videos_per_poll: int = 1
     max_videos_per_channel: int = 20
     max_videos_total: int = 200
@@ -49,6 +63,11 @@ class Config:
         default_factory=lambda: Path("./tk_orchestrator.db").resolve()
     )
     default_channels: list[str] = dataclasses.field(default_factory=list)
+    retention_enabled: bool = True
+    retention_watched_ratio_threshold: float = 0.5
+    retention_delete_batch_size: int = 10
+    retention_keep_newest_per_channel: int = 2
+    retention_min_age_hours: int = 24
 
     def __post_init__(self) -> None:
         if isinstance(self.output_dir, str):
