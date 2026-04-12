@@ -10,7 +10,7 @@ from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from .config import Config
-from .db import Channel, Comment, Job, Video, get_session
+from .models import Channel, Comment, Job, Video, get_session
 from .pipeline import run_cmd
 from .queue import enqueue
 
@@ -126,7 +126,8 @@ async def _translate_comments(
             )
 
             cmd = [
-                "tk-batch-translate", "comments",
+                "tk-batch-translate",
+                "comments",
                 str(input_path),
                 "--output",
                 str(output_path),
@@ -173,7 +174,9 @@ async def poll_channel(
             channel_video_total,
             per_channel_limit,
         )
-        return PollResult([], "channel_limit_reached", channel_video_total, total_video_total)
+        return PollResult(
+            [], "channel_limit_reached", channel_video_total, total_video_total
+        )
 
     if total_video_total >= total_video_limit:
         logger.info(
@@ -182,7 +185,9 @@ async def poll_channel(
             total_video_total,
             total_video_limit,
         )
-        return PollResult([], "total_limit_reached", channel_video_total, total_video_total)
+        return PollResult(
+            [], "total_limit_reached", channel_video_total, total_video_total
+        )
 
     videos = await _find_new_videos(channel_url, config)
     if not videos:
@@ -307,7 +312,9 @@ async def poll_channel(
         total_video_total,
         total_video_limit,
     )
-    return PollResult(new_job_ids, "created_jobs", channel_video_total, total_video_total)
+    return PollResult(
+        new_job_ids, "created_jobs", channel_video_total, total_video_total
+    )
 
 
 async def poll_all_channels(config: Config) -> None:

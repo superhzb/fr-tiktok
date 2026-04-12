@@ -1,24 +1,18 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Generator
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     ForeignKey,
     Integer,
-    inspect,
     String,
     Text,
-    create_engine,
-    text,
 )
-from sqlalchemy.orm import DeclarativeBase, Session, relationship
-
-from .config import Config
+from sqlalchemy.orm import DeclarativeBase, relationship
 
 
 class Base(DeclarativeBase):
@@ -57,15 +51,25 @@ class Video(Base):
     discovered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     channel = relationship("Channel", back_populates="videos")
-    comments = relationship("Comment", back_populates="video")
-    jobs = relationship("Job", back_populates="video")
+    comments = relationship(
+        "Comment", back_populates="video", cascade="all, delete-orphan"
+    )
+    jobs = relationship("Job", back_populates="video", cascade="all, delete-orphan")
+    watch_progress = relationship(
+        "WatchProgress",
+        back_populates="video",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class Comment(Base):
     __tablename__ = "comments"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    video_id = Column(String, ForeignKey("videos.id"), nullable=False)
+    video_id = Column(
+        String, ForeignKey("videos.id", ondelete="CASCADE"), nullable=False
+    )
     user = Column(String)
     username = Column(String)
     text = Column(Text)
@@ -80,8 +84,10 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    video_id = Column(String, ForeignKey("videos.id"), nullable=False)
-    status = Column(String, default="pending")  # pending, running, interrupted, completed, failed
+    video_id = Column(
+        String, ForeignKey("videos.id", ondelete="CASCADE"), nullable=False
+    )
+    status = Column(String, default="pending")
     current_step = Column(String, nullable=True)
     failed_step = Column(String, nullable=True)
     error_message = Column(Text, nullable=True)
@@ -91,47 +97,27 @@ class Job(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
+    last_completed_step = Column(String, nullable=True)
 
     video = relationship("Video", back_populates="jobs")
 
 
-_engine = None
+class WatchProgress(Base):
+    __tablename__ = "watch_progress"
+    __table_args__ = (
+        CheckConstraint(
+            "play_percentage >= 0 AND play_percentage <= 100",
+            name="ck_watch_progress_play_percentage",
+        ),
+    )
 
+    video_id = Column(
+        String, ForeignKey("videos.id", ondelete="CASCADE"), primary_key=True
+    )
+    play_percentage = Column(Integer, default=0)
+    loop_count = Column(Integer, default=0)
+    seen = Column(Boolean, default=False)
+    saved_position = Column(Integer, default=0)
+    updated_at = Column(DateTime, nullable=True)
 
-def init_db(config: Config) -> None:
-    global _engine
-    db_url = f"sqlite:///{config.db_path.resolve()}"
-    _engine = create_engine(db_url, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(_engine)
-    _ensure_comment_columns()
-
-
-def _ensure_comment_columns() -> None:
-    engine = get_engine()
-    inspector = inspect(engine)
-    if "comments" not in inspector.get_table_names():
-        return
-
-    columns = {column["name"] for column in inspector.get_columns("comments")}
-    if "zh" not in columns:
-        with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE comments ADD COLUMN zh TEXT"))
-
-
-def get_engine():
-    if _engine is None:
-        raise RuntimeError("Database not initialized. Call init_db() first.")
-    return _engine
-
-
-@contextmanager
-def get_session() -> Generator[Session, None, None]:
-    session = Session(get_engine())
-    try:
-        yield session
-        session.commit()
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+    video = relationship("Video", back_populates="watch_progress")

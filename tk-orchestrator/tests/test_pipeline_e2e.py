@@ -4,13 +4,16 @@ Full end-to-end pipeline test.
 Run this once to validate the full pipeline and generate fixtures.
 After it passes, run tests/test_pipeline.py --from-step <step> for targeted retests.
 """
+
 import asyncio
 import shutil
 from pathlib import Path
 
 from conftest import (
     FIXTURES_DIR,
-    TEST_VIDEO_ID, TEST_VIDEO_URL, TEST_CHANNEL_URL,
+    TEST_VIDEO_ID,
+    TEST_VIDEO_URL,
+    TEST_CHANNEL_URL,
 )
 
 
@@ -20,7 +23,7 @@ def test_full_pipeline_happy_path(test_config):
     alignment → srt_merge → translation → comments fetched and translated
     → job status = completed.
     """
-    from tk_orchestrator.db import Channel, Video, Job, Comment, get_session
+    from tk_orchestrator.models import Channel, Video, Job, Comment, get_session
     from tk_orchestrator.scheduler import _run_comments, _translate_comments
     from tk_orchestrator.pipeline import run_pipeline
 
@@ -55,14 +58,16 @@ def test_full_pipeline_happy_path(test_config):
     comments = asyncio.run(_translate_comments(comments, None, test_config))
     with get_session() as s:
         for c in comments:
-            s.add(Comment(
-                video_id=TEST_VIDEO_ID,
-                user=c.get("user"),
-                username=c.get("username"),
-                text=c.get("text"),
-                zh=c.get("zh"),
-                likes=c.get("likes"),
-            ))
+            s.add(
+                Comment(
+                    video_id=TEST_VIDEO_ID,
+                    user=c.get("user"),
+                    username=c.get("username"),
+                    text=c.get("text"),
+                    zh=c.get("zh"),
+                    likes=c.get("likes"),
+                )
+            )
 
     # Step 3: Run the pipeline to completion
     asyncio.run(run_pipeline(job_id, test_config))
@@ -77,7 +82,9 @@ def test_full_pipeline_happy_path(test_config):
         assert job.error_message is None
 
     # Step 5: Assert all output files exist
-    video_output_dir = Path(test_config.output_dir) / "frances.con.romeo" / TEST_VIDEO_ID
+    video_output_dir = (
+        Path(test_config.output_dir) / "frances.con.romeo" / TEST_VIDEO_ID
+    )
     expected_files = [
         "raw_transcription.json",
         "punctuated.json",

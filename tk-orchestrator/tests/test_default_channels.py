@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tk_orchestrator.cli import _seed_default_channels
 from tk_orchestrator.config import Config, load_config
-from tk_orchestrator.db import Channel, get_session, init_db
+from tk_orchestrator.models import Channel, get_session, init_db
 
 
 class ConfigDiscoveryTests(unittest.TestCase):

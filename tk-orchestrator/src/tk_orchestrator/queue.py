@@ -4,7 +4,7 @@ import asyncio
 import logging
 
 from .config import Config
-from .db import Job, get_session
+from .models import Job, get_session
 from .pipeline import run_pipeline
 
 logger = logging.getLogger(__name__)

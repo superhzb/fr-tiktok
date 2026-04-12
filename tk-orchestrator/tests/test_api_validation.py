@@ -6,12 +6,14 @@ from fastapi.testclient import TestClient
 
 from tk_orchestrator.api import app, register_scheduler
 from tk_orchestrator.config import Config
-from tk_orchestrator.db import Channel, Job, Video, get_session, init_db
+from tk_orchestrator.models import Channel, Job, Video, get_session, init_db
 
 
 def _seed_database() -> None:
     with get_session() as session:
-        channel = Channel(username="creator.test", url="https://www.tiktok.com/@creator.test")
+        channel = Channel(
+            username="creator.test", url="https://www.tiktok.com/@creator.test"
+        )
         session.add(channel)
         session.flush()
         session.add(

@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tk_orchestrator.config import Config
-from tk_orchestrator.db import Channel, Job, Video, get_session, init_db
+from tk_orchestrator.models import Channel, Job, Video, get_session, init_db
 from tk_orchestrator.pipeline import run_pipeline
 from tk_orchestrator.queue import _queue, recover_interrupted_jobs
 
@@ -21,7 +21,9 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
         init_db(self.config)
         self.channel_username = "creator.test"
         self.video_id = "7351234567890123456"
-        self.video_url = f"https://www.tiktok.com/@{self.channel_username}/video/{self.video_id}"
+        self.video_url = (
+            f"https://www.tiktok.com/@{self.channel_username}/video/{self.video_id}"
+        )
         self.job_id = self._seed_job()
 
     def tearDown(self) -> None:
@@ -41,7 +43,10 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
         error_message: str | None = None,
     ) -> int:
         with get_session() as session:
-            channel = Channel(username=self.channel_username, url=f"https://www.tiktok.com/@{self.channel_username}")
+            channel = Channel(
+                username=self.channel_username,
+                url=f"https://www.tiktok.com/@{self.channel_username}",
+            )
             session.add(channel)
             session.flush()
             session.add(
@@ -71,7 +76,7 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
         vtt_path = video_dir / "subtitles.vtt"
         first_run_cmds: list[str] = []
 
-        async def interrupting_run_cmd(cmd: list[str], _job_logger) -> str:
+        async def interrupting_run_cmd(cmd: list[str], _job_logger, **kwargs) -> str:
             first_run_cmds.append(cmd[0])
             if cmd[0] == "tk-down":
                 video_path.parent.mkdir(parents=True, exist_ok=True)
@@ -81,7 +86,9 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 raise asyncio.CancelledError()
             self.fail(f"Unexpected command before interruption: {cmd[0]}")
 
-        with patch("tk_orchestrator.pipeline.run_cmd", side_effect=interrupting_run_cmd):
+        with patch(
+            "tk_orchestrator.pipeline.run_cmd", side_effect=interrupting_run_cmd
+        ):
             with self.assertRaises(asyncio.CancelledError):
                 await run_pipeline(self.job_id, self.config)
 
@@ -96,7 +103,7 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
 
         resumed_cmds: list[str] = []
 
-        async def successful_run_cmd(cmd: list[str], _job_logger) -> str:
+        async def successful_run_cmd(cmd: list[str], _job_logger, **kwargs) -> str:
             resumed_cmds.append(cmd[0])
             if cmd[0] == "tk-stt":
                 raw_json.write_text("{}", encoding="utf-8")
@@ -107,7 +114,9 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 aligned_json.write_text("{}", encoding="utf-8")
                 return ""
             if cmd[0] == "tk-srt-merger":
-                srt_path.write_text("1\n00:00:00,000 --> 00:00:01,000\nhello\n", encoding="utf-8")
+                srt_path.write_text(
+                    "1\n00:00:00,000 --> 00:00:01,000\nhello\n", encoding="utf-8"
+                )
                 return ""
             if cmd[0] == "tk-batch-translate":
                 vtt_path.write_text("WEBVTT\n", encoding="utf-8")
@@ -119,7 +128,13 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             resumed_cmds,
-            ["tk-stt", "tk-punctuation", "tk-aligner", "tk-srt-merger", "tk-batch-translate"],
+            [
+                "tk-stt",
+                "tk-punctuation",
+                "tk-aligner",
+                "tk-srt-merger",
+                "tk-batch-translate",
+            ],
         )
         with get_session() as session:
             job = session.get(Job, self.job_id)
@@ -153,7 +168,10 @@ class QueueRecoveryTests(unittest.TestCase):
 
     def test_recover_interrupted_jobs_requeues_resumable_work(self) -> None:
         with get_session() as session:
-            channel = Channel(username=self.channel_username, url=f"https://www.tiktok.com/@{self.channel_username}")
+            channel = Channel(
+                username=self.channel_username,
+                url=f"https://www.tiktok.com/@{self.channel_username}",
+            )
             session.add(channel)
             session.flush()
             video_one = Video(
@@ -170,7 +188,9 @@ class QueueRecoveryTests(unittest.TestCase):
             )
             session.add(video_one)
             session.add(video_two)
-            job_one = Job(video_id=video_one.id, status="running", current_step="alignment")
+            job_one = Job(
+                video_id=video_one.id, status="running", current_step="alignment"
+            )
             job_two = Job(
                 video_id=video_two.id,
                 status="interrupted",

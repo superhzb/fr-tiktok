@@ -9,11 +9,12 @@ from pathlib import Path
 import click
 
 from .config import Config, load_config
-from .db import Channel, Job, Video, get_session, init_db
+from .models import Channel, Job, Video, get_session, init_db
 from .logging_config import setup_logging
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _bootstrap(config_path: str | None) -> Config:
     config = load_config(Path(config_path) if config_path else None)
@@ -61,9 +62,7 @@ def _seed_default_channels(config: Config) -> int:
         return added
 
     with get_session() as s:
-        existing_usernames = {
-            channel.username for channel in s.query(Channel).all()
-        }
+        existing_usernames = {channel.username for channel in s.query(Channel).all()}
         for value in config.default_channels:
             username, channel_url = _normalize_channel_input(value)
             if username in existing_usernames:
@@ -83,7 +82,10 @@ def _ensure_job(video_id: str, channel_id: int, url: str) -> int:
             s.add(video)
         existing = (
             s.query(Job)
-            .filter(Job.video_id == video_id, Job.status.in_(["pending", "running", "interrupted"]))
+            .filter(
+                Job.video_id == video_id,
+                Job.status.in_(["pending", "running", "interrupted"]),
+            )
             .first()
         )
         if existing:
@@ -96,6 +98,7 @@ def _ensure_job(video_id: str, channel_id: int, url: str) -> int:
 
 # ── CLI root ──────────────────────────────────────────────────────────────────
 
+
 @click.group()
 @click.option("--config", "config_path", default=None, help="Path to config.yaml")
 @click.pass_context
@@ -105,6 +108,7 @@ def main(ctx: click.Context, config_path: str | None) -> None:
 
 
 # ── channel commands ──────────────────────────────────────────────────────────
+
 
 @main.group()
 def channel() -> None:
@@ -138,7 +142,11 @@ def channel_list(ctx: click.Context) -> None:
             return
         for ch in channels:
             status = "active" if ch.is_active else "inactive"
-            last = ch.last_checked_at.strftime("%Y-%m-%d %H:%M") if ch.last_checked_at else "never"
+            last = (
+                ch.last_checked_at.strftime("%Y-%m-%d %H:%M")
+                if ch.last_checked_at
+                else "never"
+            )
             click.echo(f"  @{ch.username:<30} [{status}]  last checked: {last}")
 
 
@@ -205,6 +213,7 @@ async def _channel_check_async(username: str, config: Config) -> None:
 
 # ── run commands ──────────────────────────────────────────────────────────────
 
+
 @main.command("run")
 @click.argument("target")
 @click.pass_context
@@ -244,6 +253,7 @@ async def _run_video_async(url: str, config: Config) -> None:
 
 # ── reset ─────────────────────────────────────────────────────────────────────
 
+
 @main.command("reset")
 @click.option("--yes", is_flag=True, help="Skip confirmation prompt")
 @click.pass_context
@@ -274,6 +284,7 @@ def reset(ctx: click.Context, yes: bool) -> None:
 
 
 # ── job inspection ────────────────────────────────────────────────────────────
+
 
 @main.command("jobs")
 @click.pass_context
@@ -319,6 +330,7 @@ def job_detail(ctx: click.Context, job_id: int) -> None:
 
 # ── start ─────────────────────────────────────────────────────────────────────
 
+
 @main.command("start")
 @click.option("--host", default="0.0.0.0", show_default=True, help="API server host")
 @click.option("--port", default=8000, show_default=True, help="API server port")
@@ -343,7 +355,9 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     register_scheduler(scheduler)
     scheduler.start()
 
-    uv_config = uvicorn.Config(app, host=host, port=port, loop="none", log_level="warning")
+    uv_config = uvicorn.Config(
+        app, host=host, port=port, loop="none", log_level="warning"
+    )
     server = uvicorn.Server(uv_config)
 
     click.echo(f"tk-orchestrator started  (API: http://{host}:{port})")

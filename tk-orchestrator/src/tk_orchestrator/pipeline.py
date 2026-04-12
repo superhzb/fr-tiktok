@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .config import Config
-from .db import Job, get_session
+from .models import Job, get_session
 from .logging_config import get_job_logger, remove_job_logger
 
 logger = logging.getLogger(__name__)
@@ -171,7 +171,9 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                     resume_step,
                 )
             else:
-                logger.info("Job %d state changed: %s -> running", job_id, previous_status)
+                logger.info(
+                    "Job %d state changed: %s -> running", job_id, previous_status
+                )
 
     def set_step(step: str) -> None:
         with get_session() as s:
@@ -201,7 +203,9 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j.failed_step = step
                 j.error_message = error
                 j.current_step = None
-                logger.error("Job %d state changed: running -> failed at %s", job_id, step)
+                logger.error(
+                    "Job %d state changed: running -> failed at %s", job_id, step
+                )
 
     video_path = Path(job_video_path) if job_video_path else None
     current_step = resume_step
@@ -241,7 +245,14 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             set_step("stt")
             job_logger.info("[stt] transcribing")
             await run_cmd(
-                ["tk-stt", str(video_path), "--output", str(raw_json), "--model", config.stt_model],
+                [
+                    "tk-stt",
+                    str(video_path),
+                    "--output",
+                    str(raw_json),
+                    "--model",
+                    config.stt_model,
+                ],
                 job_logger,
                 extra_env=_step_env("stt"),
             )
@@ -283,7 +294,12 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             set_step("srt_merge")
             job_logger.info("[srt_merge] generating SRT")
             await run_cmd(
-                ["tk-srt-merger", str(aligned_json), str(punctuated_json), str(srt_path)],
+                [
+                    "tk-srt-merger",
+                    str(aligned_json),
+                    str(punctuated_json),
+                    str(srt_path),
+                ],
                 job_logger,
                 extra_env=_step_env("srt_merge"),
             )
@@ -299,7 +315,8 @@ async def run_pipeline(job_id: int, config: Config) -> None:
             job_logger.info("[translation] translating subtitles")
             await run_cmd(
                 [
-                    "tk-batch-translate", "srt",
+                    "tk-batch-translate",
+                    "srt",
                     str(srt_path),
                     "--output",
                     str(vtt_path),

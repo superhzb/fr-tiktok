@@ -13,7 +13,7 @@ from pydantic import BaseModel, StringConstraints, field_validator
 from sqlalchemy import text
 
 from .config import Config
-from .db import Channel, Comment, Job, Video, get_session
+from .models import Channel, Comment, Job, Video, get_session
 
 app = FastAPI(title="tk-orchestrator", version="0.1.0")
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     duration_ms = (time.perf_counter() - started) * 1000
     logger.info(
-        'API %s %s -> %d in %.1fms',
+        "API %s %s -> %d in %.1fms",
         request.method,
         request.url.path,
         response.status_code,
@@ -91,7 +91,9 @@ def _scheduler_health() -> dict:
     jobs = _scheduler.get_jobs()
     next_run_time = None
     if jobs:
-        next_run = min((job.next_run_time for job in jobs if job.next_run_time), default=None)
+        next_run = min(
+            (job.next_run_time for job in jobs if job.next_run_time), default=None
+        )
         if next_run is not None:
             next_run_time = next_run.isoformat()
 
@@ -247,7 +249,7 @@ async def get_channel(
     username: Annotated[
         Username,
         FastAPIPath(description="TikTok username, with or without a leading @"),
-    ]
+    ],
 ):
     username = username.lstrip("@")
     with get_session() as s:
@@ -283,7 +285,7 @@ async def get_video(
     video_id: Annotated[
         VideoId,
         FastAPIPath(description="Numeric TikTok video ID"),
-    ]
+    ],
 ):
     with get_session() as s:
         v = s.query(Video).filter(Video.id == video_id).first()
@@ -300,7 +302,7 @@ async def get_video_comments(
     video_id: Annotated[
         VideoId,
         FastAPIPath(description="Numeric TikTok video ID"),
-    ]
+    ],
 ):
     with get_session() as s:
         v = s.query(Video).filter(Video.id == video_id).first()
@@ -320,7 +322,7 @@ async def get_video_subtitles(
     video_id: Annotated[
         VideoId,
         FastAPIPath(description="Numeric TikTok video ID"),
-    ]
+    ],
 ):
     with get_session() as s:
         v = s.query(Video).filter(Video.id == video_id).first()
