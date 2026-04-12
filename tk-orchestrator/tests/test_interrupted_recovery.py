@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 from tk_orchestrator.config import Config
 from tk_orchestrator.models import Channel, Job, Video, get_session, init_db
-from tk_orchestrator.pipeline import run_pipeline
-from tk_orchestrator.queue import _queue, recover_interrupted_jobs
+from tk_orchestrator.worker.pipeline import run_pipeline
+from tk_orchestrator.worker.queue import _claim_next_job, recover_interrupted_jobs
 
 
 class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
@@ -27,12 +27,6 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.job_id = self._seed_job()
 
     def tearDown(self) -> None:
-        while True:
-            try:
-                _queue.get_nowait()
-                _queue.task_done()
-            except asyncio.QueueEmpty:
-                break
         self.temp_dir.cleanup()
 
     def _seed_job(
@@ -87,7 +81,7 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
             self.fail(f"Unexpected command before interruption: {cmd[0]}")
 
         with patch(
-            "tk_orchestrator.pipeline.run_cmd", side_effect=interrupting_run_cmd
+            "tk_orchestrator.worker.pipeline.run_cmd", side_effect=interrupting_run_cmd
         ):
             with self.assertRaises(asyncio.CancelledError):
                 await run_pipeline(self.job_id, self.config)
@@ -123,7 +117,9 @@ class InterruptedPipelineRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 return ""
             self.fail(f"Unexpected command during resume: {cmd[0]}")
 
-        with patch("tk_orchestrator.pipeline.run_cmd", side_effect=successful_run_cmd):
+        with patch(
+            "tk_orchestrator.worker.pipeline.run_cmd", side_effect=successful_run_cmd
+        ):
             await run_pipeline(self.job_id, self.config)
 
         self.assertEqual(
@@ -158,15 +154,9 @@ class QueueRecoveryTests(unittest.TestCase):
         self.channel_username = "creator.test"
 
     def tearDown(self) -> None:
-        while True:
-            try:
-                _queue.get_nowait()
-                _queue.task_done()
-            except asyncio.QueueEmpty:
-                break
         self.temp_dir.cleanup()
 
-    def test_recover_interrupted_jobs_requeues_resumable_work(self) -> None:
+    def test_recover_interrupted_jobs_marks_stale_running(self) -> None:
         with get_session() as session:
             channel = Channel(
                 username=self.channel_username,
@@ -205,11 +195,7 @@ class QueueRecoveryTests(unittest.TestCase):
 
         recovered = recover_interrupted_jobs()
 
-        self.assertEqual(recovered, [running_job_id, interrupted_job_id])
-        queued = [_queue.get_nowait(), _queue.get_nowait()]
-        _queue.task_done()
-        _queue.task_done()
-        self.assertEqual(queued, [running_job_id, interrupted_job_id])
+        self.assertEqual(recovered, [running_job_id])
         with get_session() as session:
             running_job = session.get(Job, running_job_id)
             interrupted_job = session.get(Job, interrupted_job_id)
@@ -225,3 +211,8 @@ class QueueRecoveryTests(unittest.TestCase):
                 interrupted_job.error_message,
                 "Interrupted during translation",
             )
+
+        claimable = []
+        while (job_id := _claim_next_job()) is not None:
+            claimable.append(job_id)
+        self.assertEqual(claimable, [running_job_id, interrupted_job_id])

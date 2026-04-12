@@ -24,8 +24,8 @@ def test_full_pipeline_happy_path(test_config):
     → job status = completed.
     """
     from tk_orchestrator.models import Channel, Video, Job, Comment, get_session
-    from tk_orchestrator.scheduler import _run_comments, _translate_comments
-    from tk_orchestrator.pipeline import run_pipeline
+    from tk_orchestrator.scheduler.polling import _run_comments, _translate_comments
+    from tk_orchestrator.worker import run_pipeline
 
     # Step 1: Insert channel + target video + job directly, bypassing the channel
     # checker so we always test the specific pinned video regardless of what the

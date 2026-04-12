@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+import shutil
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -12,8 +14,20 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, StringConstraints, field_validator
 from sqlalchemy import text
 
-from .config import Config
-from .models import Channel, Comment, Job, Video, get_session
+from ..config import Config
+from ..models import (
+    Channel,
+    Comment,
+    Job,
+    Video,
+    WatchProgress,
+    get_session,
+    VideoResponse,
+    VideoFilesResponse,
+    FeedVideoResponse,
+    WatchProgressRequest,
+    WatchProgressResponse,
+)
 
 app = FastAPI(title="tk-orchestrator", version="0.1.0")
 logger = logging.getLogger(__name__)
@@ -26,7 +40,6 @@ app.add_middleware(
 )
 
 _config: Config | None = None
-_scheduler = None
 
 
 @app.middleware("http")
@@ -45,18 +58,11 @@ async def log_requests(request: Request, call_next):
 
 
 def configure(config: Config) -> None:
-    """Set config and mount static output directory."""
     global _config
     _config = config
     output_dir = config.output_dir.resolve()
     if output_dir.is_dir():
         app.mount("/output", StaticFiles(directory=str(output_dir)), name="output")
-
-
-def register_scheduler(scheduler) -> None:
-    """Expose the live scheduler instance to API endpoints."""
-    global _scheduler
-    _scheduler = scheduler
 
 
 def _output_dir() -> Path:
@@ -72,37 +78,6 @@ def _db_health() -> dict:
         return {"status": "ok"}
     except Exception as exc:
         return {"status": "error", "error": str(exc)}
-
-
-def _scheduler_state_name(state: int | None) -> str:
-    if state == 1:
-        return "running"
-    if state == 2:
-        return "paused"
-    if state == 0:
-        return "stopped"
-    return "unknown"
-
-
-def _scheduler_health() -> dict:
-    if _scheduler is None:
-        return {"status": "not_configured", "running": False, "jobs": 0}
-
-    jobs = _scheduler.get_jobs()
-    next_run_time = None
-    if jobs:
-        next_run = min(
-            (job.next_run_time for job in jobs if job.next_run_time), default=None
-        )
-        if next_run is not None:
-            next_run_time = next_run.isoformat()
-
-    return {
-        "status": _scheduler_state_name(getattr(_scheduler, "state", None)),
-        "running": bool(getattr(_scheduler, "running", False)),
-        "jobs": len(jobs),
-        "next_run_time": next_run_time,
-    }
 
 
 VideoId = Annotated[
@@ -126,9 +101,6 @@ class VideoListQuery(BaseModel):
         if value is None:
             return None
         return value.lstrip("@")
-
-
-# ── helpers ──────────────────────────────────────────────────────────────────
 
 
 def _serialize_channel(c: Channel) -> dict:
@@ -191,7 +163,6 @@ def _serialize_job(j: Job) -> dict:
 
 
 def _video_files(v: Video) -> dict:
-    """Resolve output file paths for a video into API-serveable URLs."""
     channel_username = v.channel.username if v.channel else v.author
     video_dir = _output_dir() / channel_username / v.id
     result: dict = {"video_url": None, "vtt_url": None, "srt_url": None}
@@ -209,30 +180,16 @@ def _video_files(v: Video) -> dict:
     return result
 
 
-# ── channels ─────────────────────────────────────────────────────────────────
-
-
 @app.get("/health")
 async def health_check():
     db = _db_health()
-    scheduler = _scheduler_health()
-    if db["status"] != "ok":
-        overall_status = "error"
-        status_code = 503
-    elif _scheduler is not None and not scheduler["running"]:
-        overall_status = "degraded"
-        status_code = 503
-    else:
-        overall_status = "ok"
-        status_code = 200
-
+    status_code = 200 if db["status"] == "ok" else 503
     return JSONResponse(
         status_code=status_code,
         content={
-            "status": overall_status,
+            "status": "ok" if db["status"] == "ok" else "error",
             "service": "tk-orchestrator",
             "database": db,
-            "scheduler": scheduler,
         },
     )
 
@@ -257,9 +214,6 @@ async def get_channel(
         if not c:
             raise HTTPException(404, "Channel not found")
         return _serialize_channel(c)
-
-
-# ── videos ───────────────────────────────────────────────────────────────────
 
 
 @app.get("/videos")
@@ -331,9 +285,6 @@ async def get_video_subtitles(
         return _video_files(v)
 
 
-# ── jobs ─────────────────────────────────────────────────────────────────────
-
-
 @app.get("/jobs")
 async def list_jobs():
     with get_session() as s:
@@ -348,3 +299,132 @@ async def get_job(job_id: int):
         if not j:
             raise HTTPException(404, "Job not found")
         return _serialize_job(j)
+
+
+@app.get("/feed")
+async def feed():
+    with get_session() as s:
+        completed_video_ids = (
+            s.query(Job.video_id)
+            .filter(Job.status == "completed")
+            .distinct()
+            .subquery()
+        )
+
+        videos = (
+            s.query(Video, WatchProgress)
+            .filter(Video.id.in_(s.query(completed_video_ids.c.video_id)))
+            .outerjoin(WatchProgress, Video.id == WatchProgress.video_id)
+            .all()
+        )
+
+        result = []
+        for v, wp in videos:
+            data = _serialize_video(v)
+            data["files"] = _video_files(v)
+            data["channel_username"] = v.channel.username if v.channel else None
+            data["watch_progress"] = (
+                {
+                    "video_id": wp.video_id,
+                    "play_percentage": wp.play_percentage,
+                    "loop_count": wp.loop_count,
+                    "seen": wp.seen,
+                    "saved_position": wp.saved_position,
+                    "updated_at": wp.updated_at.isoformat() if wp.updated_at else None,
+                }
+                if wp
+                else None
+            )
+            result.append(data)
+
+        def feed_sort_key(item):
+            wp = item.get("watch_progress")
+            pct = wp["play_percentage"] if wp else 0
+            loops = wp["loop_count"] if wp else 0
+
+            if pct == 0:
+                tier = 0
+            elif loops == 0:
+                tier = 1
+            else:
+                tier = 2
+
+            if tier == 0:
+                da = item.get("discovered_at")
+                ts = datetime.fromisoformat(da).timestamp() if da else 0
+                return (tier, -ts)
+            elif tier == 1:
+                return (tier, pct)
+            else:
+                return (tier, loops)
+
+        result.sort(key=feed_sort_key)
+        return result
+
+
+@app.get("/progress")
+async def list_progress():
+    with get_session() as s:
+        records = s.query(WatchProgress).all()
+        return [
+            {
+                "video_id": wp.video_id,
+                "play_percentage": wp.play_percentage,
+                "loop_count": wp.loop_count,
+                "seen": wp.seen,
+                "saved_position": wp.saved_position,
+                "updated_at": wp.updated_at.isoformat() if wp.updated_at else None,
+            }
+            for wp in records
+        ]
+
+
+@app.put("/videos/{video_id}/progress")
+async def update_progress(
+    video_id: Annotated[VideoId, FastAPIPath(description="Numeric TikTok video ID")],
+    body: WatchProgressRequest,
+):
+    with get_session() as s:
+        v = s.query(Video).filter(Video.id == video_id).first()
+        if not v:
+            raise HTTPException(404, "Video not found")
+
+        wp = s.get(WatchProgress, video_id)
+        if wp:
+            wp.play_percentage = body.play_percentage
+            wp.loop_count = body.loop_count
+            wp.seen = body.seen
+            wp.saved_position = body.saved_position
+            wp.updated_at = datetime.now(timezone.utc)
+        else:
+            wp = WatchProgress(
+                video_id=video_id,
+                play_percentage=body.play_percentage,
+                loop_count=body.loop_count,
+                seen=body.seen,
+                saved_position=body.saved_position,
+                updated_at=datetime.now(timezone.utc),
+            )
+            s.add(wp)
+
+    return {"status": "ok", "video_id": video_id}
+
+
+@app.delete("/videos/{video_id}")
+async def delete_video(
+    video_id: Annotated[VideoId, FastAPIPath(description="Numeric TikTok video ID")],
+):
+    with get_session() as s:
+        v = s.query(Video).filter(Video.id == video_id).first()
+        if not v:
+            raise HTTPException(404, "Video not found")
+
+        channel_username = v.channel.username if v.channel else v.author
+        s.delete(v)
+
+    if channel_username:
+        video_dir = _output_dir() / channel_username / video_id
+        if video_dir.is_dir():
+            shutil.rmtree(video_dir)
+
+    return {"status": "deleted", "video_id": video_id}

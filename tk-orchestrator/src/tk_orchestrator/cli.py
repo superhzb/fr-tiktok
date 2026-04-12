@@ -177,7 +177,7 @@ def channel_check(ctx: click.Context, username: str) -> None:
 
 
 async def _channel_check_async(username: str, config: Config) -> None:
-    from .pipeline import run_pipeline
+    from .worker import run_pipeline
     from .scheduler import poll_channel
 
     with get_session() as s:
@@ -227,7 +227,7 @@ def run(ctx: click.Context, target: str) -> None:
 
 
 async def _run_all_async(config: Config) -> None:
-    from .pipeline import run_pipeline
+    from .worker import run_pipeline
 
     with get_session() as s:
         queued = s.query(Job).filter(Job.status.in_(["pending", "interrupted"])).all()
@@ -243,7 +243,7 @@ async def _run_all_async(config: Config) -> None:
 
 
 async def _run_video_async(url: str, config: Config) -> None:
-    from .pipeline import run_pipeline
+    from .worker import run_pipeline
 
     username, video_id = _parse_tiktok_video_url(url)
     channel_id = _ensure_channel(username)
@@ -344,15 +344,14 @@ def start(ctx: click.Context, host: str, port: int) -> None:
 async def _start_async(config: Config, host: str, port: int) -> None:
     import uvicorn
 
-    from .api import app, configure, register_scheduler
-    from .queue import recover_interrupted_jobs, worker
+    from .api import app, configure
+    from .worker import recover_interrupted_jobs, worker
     from .scheduler import setup_scheduler
 
     configure(config)
     seeded_channels = _seed_default_channels(config)
     recovered_jobs = recover_interrupted_jobs()
     scheduler = setup_scheduler(config)
-    register_scheduler(scheduler)
     scheduler.start()
 
     uv_config = uvicorn.Config(

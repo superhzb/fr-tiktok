@@ -9,10 +9,9 @@ from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from .config import Config
-from .models import Channel, Comment, Job, Video, get_session
-from .pipeline import run_cmd
-from .queue import enqueue
+from ..config import Config
+from ..models import Channel, Comment, Job, Video, get_session
+from .subprocess import run_cli
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ class PollResult:
 
 async def _run_channel_checker_count(channel_url: str, count: int) -> list[dict]:
     try:
-        stdout = await run_cmd(
+        stdout = await run_cli(
             ["tk-channel-checker", channel_url, "--count", str(count)],
             _checker_log,
         )
@@ -97,7 +96,7 @@ async def _find_new_videos(channel_url: str, config: Config) -> list[dict]:
 
 async def _run_comments(video_url: str, config: Config) -> list[dict]:
     try:
-        stdout = await run_cmd(
+        stdout = await run_cli(
             ["tk-comments", video_url, "--count", str(config.comment_count)],
             _comments_log,
         )
@@ -142,7 +141,7 @@ async def _translate_comments(
                 description_path.write_text(video_description, encoding="utf-8")
                 cmd.extend(["--description", str(description_path)])
 
-            await run_cmd(cmd, _comments_log)
+            await run_cli(cmd, _comments_log)
             return json.loads(output_path.read_text(encoding="utf-8"))
     except Exception as e:
         logger.error("tk-comment-translator failed: %s", e)
@@ -318,7 +317,7 @@ async def poll_channel(
 
 
 async def poll_all_channels(config: Config) -> None:
-    """Check all active channels for new videos and enqueue jobs."""
+    """Check all active channels for new videos."""
     logger.info("Scheduler tick: polling channels")
     with get_session() as s:
         channels = s.query(Channel).filter(Channel.is_active == True).all()
@@ -335,8 +334,6 @@ async def poll_all_channels(config: Config) -> None:
 
     for channel_id, username, channel_url in channel_infos:
         result = await poll_channel(channel_id, username, channel_url, config)
-        for job_id in result.job_ids:
-            enqueue(job_id)
         logger.info(
             "Scheduler channel summary @%s: reason=%s enqueued_jobs=%d stored_channel_videos=%d stored_total_videos=%d",
             username,

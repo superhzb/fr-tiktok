@@ -7,9 +7,9 @@ from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .config import Config
-from .models import Job, get_session
-from .logging_config import get_job_logger, remove_job_logger
+from ..config import Config
+from ..models import Job, get_session
+from ..logging_config import get_job_logger, remove_job_logger
 
 logger = logging.getLogger(__name__)
 PIPELINE_STEPS = (
@@ -26,7 +26,14 @@ def _step_index(step: str) -> int:
     return PIPELINE_STEPS.index(step)
 
 
-def _resolve_resume_step(job: Job, video_dir: Path) -> str:
+def _resolve_resume_step(job, video_dir: Path) -> str:
+    last_done = getattr(job, "last_completed_step", None)
+    if last_done and last_done in PIPELINE_STEPS:
+        idx = PIPELINE_STEPS.index(last_done)
+        if idx + 1 < len(PIPELINE_STEPS):
+            return PIPELINE_STEPS[idx + 1]
+        return PIPELINE_STEPS[-1]
+
     if job.current_step in PIPELINE_STEPS and job.status in {"running", "interrupted"}:
         return job.current_step
 
@@ -59,10 +66,6 @@ async def run_cmd(
     *,
     extra_env: dict[str, str] | None = None,
 ) -> str:
-    """Run a subprocess, stream stderr to the logger, and return stdout.
-
-    Raises RuntimeError on non-zero exit code with stderr as the message.
-    """
     job_logger.debug("$ %s", " ".join(cmd))
     run_env = {**os.environ, **(extra_env or {})}
     proc = await asyncio.create_subprocess_exec(
@@ -112,7 +115,6 @@ async def run_cmd(
 
 
 async def run_pipeline(job_id: int, config: Config) -> None:
-    """Run the full subtitle pipeline for a job."""
     with get_session() as s:
         job = s.get(Job, job_id)
         if job is None:
@@ -122,11 +124,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         video_url = job.video.url
         channel_username = job.video.channel.username
         previous_status = job.status
-        # Extract scalar fields needed outside this session to avoid DetachedInstanceError
         job_current_step = job.current_step
         job_status = job.status
         job_video_path = job.video_path
         job_srt_path = job.srt_path
+        job_last_completed_step = job.last_completed_step
 
     video_dir = config.output_dir / channel_username / video_id
     video_dir.mkdir(parents=True, exist_ok=True)
@@ -138,12 +140,12 @@ async def run_pipeline(job_id: int, config: Config) -> None:
 
     job_logger = get_job_logger(job_id, video_dir)
 
-    # Build a lightweight namespace so _resolve_resume_step doesn't need a live session
     class _JobSnapshot:
         current_step = job_current_step
         status = job_status
         video_path = job_video_path
         srt_path = job_srt_path
+        last_completed_step = job_last_completed_step
 
     resume_step = _resolve_resume_step(_JobSnapshot(), video_dir)
     if previous_status == "interrupted":
@@ -215,7 +217,6 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         return {**ctx_env, "TK_PIPELINE_STEP": step}
 
     try:
-        # ── download ──────────────────────────────────────────────────────────
         if _should_run(resume_step, "download"):
             current_step = "download"
             set_step("download")
@@ -232,6 +233,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j = s.get(Job, job_id)
                 if j:
                     j.video_path = str(video_path)
+                    j.last_completed_step = "download"
         elif video_path is None:
             mp4s = sorted(video_dir.glob("*.mp4"))
             video_path = mp4s[0] if mp4s else None
@@ -239,7 +241,6 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         if video_path is None:
             raise RuntimeError("missing downloaded video for resumed job")
 
-        # ── speech-to-text ────────────────────────────────────────────────────
         if _should_run(resume_step, "stt"):
             current_step = "stt"
             set_step("stt")
@@ -256,8 +257,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 job_logger,
                 extra_env=_step_env("stt"),
             )
+            with get_session() as s:
+                j = s.get(Job, job_id)
+                if j:
+                    j.last_completed_step = "stt"
 
-        # ── punctuation ───────────────────────────────────────────────────────
         if _should_run(resume_step, "punctuation"):
             current_step = "punctuation"
             set_step("punctuation")
@@ -268,8 +272,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 extra_env=_step_env("punctuation"),
             )
             punctuated_json.write_text(punct_out)
+            with get_session() as s:
+                j = s.get(Job, job_id)
+                if j:
+                    j.last_completed_step = "punctuation"
 
-        # ── alignment ─────────────────────────────────────────────────────────
         if _should_run(resume_step, "alignment"):
             current_step = "alignment"
             set_step("alignment")
@@ -287,8 +294,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 job_logger,
                 extra_env=_step_env("alignment"),
             )
+            with get_session() as s:
+                j = s.get(Job, job_id)
+                if j:
+                    j.last_completed_step = "alignment"
 
-        # ── SRT merge ─────────────────────────────────────────────────────────
         if _should_run(resume_step, "srt_merge"):
             current_step = "srt_merge"
             set_step("srt_merge")
@@ -307,8 +317,8 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j = s.get(Job, job_id)
                 if j:
                     j.srt_path = str(srt_path)
+                    j.last_completed_step = "srt_merge"
 
-        # ── translation ───────────────────────────────────────────────────────
         if _should_run(resume_step, "translation"):
             current_step = "translation"
             set_step("translation")
@@ -334,8 +344,8 @@ async def run_pipeline(job_id: int, config: Config) -> None:
                 j = s.get(Job, job_id)
                 if j:
                     j.vtt_path = str(vtt_path)
+                    j.last_completed_step = "translation"
 
-        # ── done ──────────────────────────────────────────────────────────────
         with get_session() as s:
             j = s.get(Job, job_id)
             if j:
