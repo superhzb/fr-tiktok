@@ -11,6 +11,7 @@ export default function VideoFeed() {
     updatePlayProgress,
     markLoopCompleted,
     getSessionState,
+    deleteVideo,
   } = useSmartFeed()
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -56,6 +57,7 @@ export default function VideoFeed() {
               sessionState={getSessionState(video.id)}
               onPlayProgress={updatePlayProgress}
               onLoopComplete={markLoopCompleted}
+              onDelete={() => deleteVideo(video.id)}
             />
           </div>
         ))}

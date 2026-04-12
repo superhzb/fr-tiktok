@@ -9,7 +9,7 @@ How tk-web should consume the updated tk-orchestrator API.
 | Before | After |
 |--------|-------|
 | `GET /videos?status=completed` returns a flat list, no watch state | `GET /feed` returns videos **pre-sorted** by watch progress, with `watch_progress` attached to each item |
-| Watch progress lives only in IndexedDB | Backend is the source of truth; IndexedDB becomes an offline cache |
+| Watch progress lives only in IndexedDB | Backend is the source of truth; frontend syncs progress to the API |
 | No way to delete a video | `DELETE /videos/{id}` removes video + files + all related data |
 | No server-side progress storage | `PUT /videos/{id}/progress` upserts watch state |
 
@@ -72,6 +72,11 @@ The `watch_progress` field is `null` for unwatched videos.
 
 **Purpose**: Report watch progress to the backend. Call this on flush intervals
 (replaces writing to IndexedDB).
+
+The backend stores `saved_position`, but the frontend should **not** use it to
+resume playback after a cold app restart. Resume-from-position is only an
+in-memory same-session behavior when the user scrolls back to a previously
+visited video.
 
 **Request body**:
 
@@ -139,14 +144,117 @@ src/
 ├── api.ts                    # add fetchFeed, syncProgress, deleteVideo
 ├── types.ts                  # add FeedVideo type (Video + watch_progress)
 ├── lib/
-│   ├── feedSort.ts           # DELETE or keep as offline fallback
-│   └── playStatsDb.ts        # demote to offline cache, add sync logic
+│   ├── feedSort.ts           # legacy local sort; remove from main feed path
+│   └── playStatsDb.ts        # legacy IndexedDB path; remove from main feed path
 ├── context/
 │   └── SmartFeedContext.tsx   # replace IndexedDB-first with API-first
 └── App.tsx                   # call fetchFeed instead of fetchVideos
 ```
 
-### Step 1: Update `types.ts`
+## Parallel Work Split
+
+Use these tracks to let multiple frontend engineers work in parallel with
+minimal overlap.
+
+### Track A: API Client + Types
+
+**Owner**: frontend API/data layer
+
+**Files**:
+- `src/types.ts`
+- `src/api.ts`
+
+**Goal**: define the backend response types and API calls used by the rest of
+the app.
+
+**Deliverables**:
+- Add `WatchProgress`
+- Add `FeedVideo`
+- Add `fetchFeed()`
+- Add `syncProgress()`
+- Add `deleteVideo()`
+- Keep existing comment/subtitle helpers unchanged
+
+**Rules**:
+- Preserve existing `Video` shape and extend it with `FeedVideo`
+- Throw on non-OK responses for all new API calls
+- Do not add offline/cache logic in this track
+
+### Track B: App Bootstrap
+
+**Owner**: app shell / entrypoint
+
+**Files**:
+- `src/App.tsx`
+
+**Goal**: switch app startup from the legacy completed-videos endpoint to the
+new feed endpoint.
+
+**Deliverables**:
+- Fetch with `fetchFeed()` on app load
+- Store `FeedVideo[]` in app state
+- Keep the existing loading, error, and empty states
+- Continue filtering out videos with no `files.video_url`
+
+**Rules**:
+- App bootstrap should not implement feed sorting
+- App bootstrap should not implement progress sync
+
+### Track C: Smart Feed State
+
+**Owner**: playback/feed state management
+
+**Files**:
+- `src/context/SmartFeedContext.tsx`
+
+**Goal**: consume server-provided watch progress while preserving current
+same-session playback behavior.
+
+**Deliverables**:
+- Remove IndexedDB-first startup hydration
+- Build `statsMapRef` from `video.watch_progress`
+- Use the incoming `/feed` order as-is
+- Flush progress to `PUT /videos/{id}/progress`
+- Keep same-session scroll-back resume via `sessionMapRef`
+- Do not restore `saved_position` on cold app launch
+
+**Rules**:
+- Treat `/feed` ordering as fixed for the current app session
+- Do not locally re-sort after progress changes
+- Do not re-fetch `/feed` in response to progress writes
+- Do not add offline fallback in this track
+
+**Integration dependency**:
+- Depends on Track A types and API functions
+- Can be developed in parallel with Track B as long as `FeedVideo` is the
+  agreed input type
+
+### Track D: Delete Video UX
+
+**Owner**: feed UI / interaction layer
+
+**Files**:
+- whichever component owns the delete interaction
+- possibly `src/App.tsx` if top-level feed state owns removal
+
+**Goal**: expose backend deletion to the user and remove deleted items from the
+current feed state.
+
+**Deliverables**:
+- Add a delete trigger in the UI
+- Call `deleteVideo(videoId)`
+- Remove the deleted video from local state after success
+- Handle failure visibly or at least log it clearly
+
+**Rules**:
+- Deletion should not trigger a feed re-fetch
+- Deletion should update local state immediately after success
+
+---
+
+## Implementation Details
+
+### Track A Details: Update `types.ts`
 
 Add the server-side watch progress type and the feed video type:
 
@@ -168,9 +276,9 @@ export interface FeedVideo extends Video {
 ```
 
 The existing `VideoPlayStats` (camelCase, IndexedDB format) can stay as-is for
-the offline cache layer. You'll convert between the two formats.
+the in-memory play stats layer. You'll convert between the two formats.
 
-### Step 2: Update `api.ts`
+### Track A Details: Update `api.ts`
 
 ```typescript
 export async function fetchFeed(): Promise<FeedVideo[]> {
@@ -188,11 +296,12 @@ export async function syncProgress(
     saved_position: number
   }
 ): Promise<void> {
-  await fetch(`${BASE}/videos/${videoId}/progress`, {
+  const res = await fetch(`${BASE}/videos/${videoId}/progress`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(progress),
   })
+  if (!res.ok) throw new Error(`Failed to sync progress for ${videoId}`)
 }
 
 export async function deleteVideo(videoId: string): Promise<void> {
@@ -201,7 +310,7 @@ export async function deleteVideo(videoId: string): Promise<void> {
 }
 ```
 
-### Step 3: Update `App.tsx`
+### Track B Details: Update `App.tsx`
 
 ```diff
 - import { fetchVideos } from './api'
@@ -219,11 +328,16 @@ export async function deleteVideo(videoId: string): Promise<void> {
 +     .then(vs => setVideos(vs.filter(v => v.files.video_url)))
 ```
 
-### Step 4: Update `SmartFeedContext.tsx`
+### Track C Details: Update `SmartFeedContext.tsx`
 
 The key change: **the feed comes pre-sorted from the server** and includes
 `watch_progress`. The context no longer needs to load from IndexedDB on startup
 or sort locally.
+
+Important session rule: treat the `/feed` order as fixed for the lifetime of the
+current app session. Progress updates should not trigger a local re-sort or a
+background re-fetch to move videos around. The next app launch will fetch a new
+server-sorted feed.
 
 **On mount (replace the `getAllStats` effect):**
 
@@ -277,29 +391,13 @@ const flushStats = useCallback(() => {
 
 The 30-second flush interval and visibility-change flush stay the same.
 
-### Step 5: (Optional) Keep IndexedDB as offline fallback
+Do not hydrate `saved_position` from the backend on app start. Same-session
+scroll-back resume should continue to live in `sessionMapRef` only.
 
-If the app needs to work offline (Capacitor / PWA), keep the existing
-`playStatsDb.ts` as a write-through cache:
+The existing IndexedDB persistence path should be removed or ignored for this
+migration. Offline fallback is out of scope for now.
 
-```
-During playback:
-  1. Update in-memory stat (unchanged)
-  2. Mark as dirty (unchanged)
-
-On flush:
-  1. Write to backend via PUT /videos/{id}/progress
-  2. Also write to IndexedDB (fire-and-forget)
-
-On app start:
-  1. Try GET /feed from backend
-  2. If offline, fall back to GET /videos (cached) + IndexedDB stats + local sort
-```
-
-This way the backend is the source of truth when online, and IndexedDB covers
-the offline gap.
-
-### Step 6: Add video deletion UI
+### Track D Details: Add video deletion UI
 
 Wire a delete action (e.g. long-press menu or swipe action) to:
 
@@ -351,6 +449,23 @@ These existing endpoints are unchanged and remain available:
 - [ ] Unwatched videos appear first, then partially watched (by % asc), then completed (by loops asc)
 - [ ] Playing a video and waiting 30s: `PUT /videos/{id}/progress` is called
 - [ ] Backgrounding the app: progress is flushed immediately
-- [ ] Killing and reopening the app: progress is restored from the server (not just IndexedDB)
+- [ ] Killing and reopening the app: feed order reflects the latest server-side progress
+- [ ] Killing and reopening the app: playback starts from the beginning, not from prior `saved_position`
+- [ ] Scrolling back to a previously visited video in the same session: playback resumes from in-memory session state
+- [ ] Progress updates during a session do not re-sort the visible feed
 - [ ] Deleting a video: `DELETE /videos/{id}` succeeds, video disappears from feed
-- [ ] Offline: app falls back to cached data + IndexedDB stats (if implementing offline support)
+
+## Suggested Merge Order
+
+To reduce conflicts:
+
+1. Merge Track A first
+2. Merge Track B and Track D in either order
+3. Merge Track C last, since it touches the main feed-state integration point
+
+## Out Of Scope
+
+- Offline fallback
+- IndexedDB write-through caching
+- Cold-start resume from `saved_position`
+- Mid-session feed re-sorting

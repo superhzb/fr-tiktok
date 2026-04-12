@@ -7,17 +7,17 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import type { Video, VideoPlayStats, VideoSessionState } from '../types'
-import { getAllStats, putManyStats } from '../lib/playStatsDb'
-import { sortFeed } from '../lib/feedSort'
+import type { FeedVideo, VideoPlayStats, VideoSessionState } from '../types'
+import { syncProgress } from '../api'
 
 interface SmartFeedContextValue {
-  orderedFeed: Video[]
+  orderedFeed: FeedVideo[]
   activeIndex: number
   setActiveIndex: (index: number) => void
   updatePlayProgress: (videoId: string, currentTime: number, duration: number) => void
   markLoopCompleted: (videoId: string) => void
   getSessionState: (videoId: string) => VideoSessionState
+  deleteVideo: (videoId: string) => Promise<void>
 }
 
 const SmartFeedContext = createContext<SmartFeedContextValue | null>(null)
@@ -29,12 +29,13 @@ export function useSmartFeed(): SmartFeedContextValue {
 }
 
 interface ProviderProps {
-  videos: Video[]
+  videos: FeedVideo[]
+  onDeleteVideo: (videoId: string) => Promise<void>
   children: ReactNode
 }
 
-export function SmartFeedProvider({ videos, children }: ProviderProps) {
-  const [orderedFeed, setOrderedFeed] = useState<Video[]>([])
+export function SmartFeedProvider({ videos, onDeleteVideo, children }: ProviderProps) {
+  const [orderedFeed, setOrderedFeed] = useState<FeedVideo[]>([])
   const [activeIndex, setActiveIndexState] = useState(0)
   const [ready, setReady] = useState(false)
 
@@ -44,46 +45,50 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
   const prevIndexRef = useRef(0)
 
   useEffect(() => {
-    let cancelled = false
-
-    getAllStats().then(stats => {
-      if (cancelled) return
-
-      const map = new Map<string, VideoPlayStats>()
-      for (const s of stats) {
-        map.set(s.videoId, s)
+    const existing = statsMapRef.current
+    const map = new Map<string, VideoPlayStats>()
+    for (const v of videos) {
+      const current = existing.get(v.id)
+      if (current) {
+        map.set(v.id, current)
+        continue
       }
-      statsMapRef.current = map
-
-      const sorted = sortFeed(videos, map)
-      setOrderedFeed(sorted)
-      setReady(true)
-    }).catch(err => {
-      console.warn('Failed to load play stats, using unsorted feed:', err)
-      if (!cancelled) {
-        setOrderedFeed(videos)
-        setReady(true)
+      if (v.watch_progress) {
+        map.set(v.id, {
+          videoId: v.id,
+          playPercentage: v.watch_progress.play_percentage,
+          loopCount: v.watch_progress.loop_count,
+          seen: v.watch_progress.seen,
+        })
       }
-    })
-
-    return () => { cancelled = true }
+    }
+    statsMapRef.current = map
+    setOrderedFeed(videos)
+    setReady(true)
   }, [videos])
 
   const flushStats = useCallback(() => {
     const dirtyIds = dirtyIdsRef.current
     if (dirtyIds.size === 0) return
 
-    const statsToSave: VideoPlayStats[] = []
-    for (const id of dirtyIds) {
-      const stat = statsMapRef.current.get(id)
-      if (stat) statsToSave.push(stat)
-    }
+    const ids = [...dirtyIds]
     dirtyIdsRef.current = new Set()
 
-    putManyStats(statsToSave).catch(err => {
-      console.warn('Failed to flush stats:', err)
-      for (const s of statsToSave) dirtyIdsRef.current.add(s.videoId)
-    })
+    for (const id of ids) {
+      const stat = statsMapRef.current.get(id)
+      if (!stat) continue
+      const session = sessionMapRef.current.get(id)
+
+      syncProgress(id, {
+        play_percentage: Math.round(stat.playPercentage),
+        loop_count: stat.loopCount,
+        seen: stat.seen,
+        saved_position: Math.round(session?.savedPosition ?? 0),
+      }).catch(err => {
+        console.warn(`Failed to sync progress for ${id}:`, err)
+        dirtyIdsRef.current.add(id)
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -162,6 +167,22 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
     return sessionMapRef.current.get(videoId) ?? { savedPosition: 0, direction: null }
   }, [])
 
+  const handleDeleteVideo = useCallback(async (videoId: string) => {
+    await onDeleteVideo(videoId)
+    statsMapRef.current.delete(videoId)
+    sessionMapRef.current.delete(videoId)
+    dirtyIdsRef.current.delete(videoId)
+    setOrderedFeed(prev => {
+      const next = prev.filter(v => v.id !== videoId)
+      setActiveIndexState(idx => {
+        const clamped = Math.min(idx, next.length - 1)
+        prevIndexRef.current = clamped
+        return Math.max(0, clamped)
+      })
+      return next
+    })
+  }, [onDeleteVideo])
+
   if (!ready) return null
 
   return (
@@ -173,6 +194,7 @@ export function SmartFeedProvider({ videos, children }: ProviderProps) {
         updatePlayProgress,
         markLoopCompleted,
         getSessionState,
+        deleteVideo: handleDeleteVideo,
       }}
     >
       {children}

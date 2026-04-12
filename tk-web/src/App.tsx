@@ -1,19 +1,24 @@
-import { useEffect, useState } from 'react'
-import { fetchVideos } from './api'
-import type { Video } from './types'
+import { useEffect, useState, useCallback } from 'react'
+import { fetchFeed, deleteVideo } from './api'
+import type { FeedVideo } from './types'
 import { SmartFeedProvider } from './context/SmartFeedContext'
 import VideoFeed from './components/VideoFeed'
 
 export default function App() {
-  const [videos, setVideos] = useState<Video[]>([])
+  const [videos, setVideos] = useState<FeedVideo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchVideos()
+    fetchFeed()
       .then(vs => setVideos(vs.filter(v => v.files.video_url)))
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+  }, [])
+
+  const handleDeleteVideo = useCallback(async (videoId: string) => {
+    await deleteVideo(videoId)
+    setVideos(prev => prev.filter(v => v.id !== videoId))
   }, [])
 
   if (loading) {
@@ -44,7 +49,7 @@ export default function App() {
     <div className="w-screen bg-black overflow-hidden" style={{ height: '100dvh' }}>
       {/* Centered card on desktop */}
       <div className="h-full max-w-sm mx-auto relative">
-        <SmartFeedProvider videos={videos}>
+        <SmartFeedProvider videos={videos} onDeleteVideo={handleDeleteVideo}>
           <VideoFeed />
         </SmartFeedProvider>
       </div>

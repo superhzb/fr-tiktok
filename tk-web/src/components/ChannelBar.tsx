@@ -4,6 +4,7 @@ interface Props {
   video: Video
   onCommentsOpen: () => void
   onSettingsOpen: () => void
+  onDelete: () => void
 }
 
 function fmt(n: number): string {
@@ -12,7 +13,7 @@ function fmt(n: number): string {
   return String(n)
 }
 
-export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Props) {
+export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen, onDelete }: Props) {
   return (
     <>
       {/* Bottom-left: author + description */}
@@ -43,6 +44,13 @@ export default function ChannelBar({ video, onCommentsOpen, onSettingsOpen }: Pr
         <button onClick={onSettingsOpen} className="flex flex-col items-center">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <span className="text-white text-lg">&#9881;</span>
+          </div>
+        </button>
+
+        {/* Delete */}
+        <button onClick={onDelete} className="flex flex-col items-center">
+          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <span className="text-white text-lg">&#128465;</span>
           </div>
         </button>
       </div>

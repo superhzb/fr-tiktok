@@ -14,6 +14,7 @@ interface Props {
   sessionState?: VideoSessionState
   onPlayProgress?: (videoId: string, currentTime: number, duration: number) => void
   onLoopComplete?: (videoId: string) => void
+  onDelete?: () => void
 }
 
 export default function VideoPlayer({
@@ -22,12 +23,14 @@ export default function VideoPlayer({
   sessionState,
   onPlayProgress,
   onLoopComplete,
+  onDelete,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [paused, setPaused] = useState(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
@@ -162,6 +165,11 @@ export default function VideoPlayer({
     }
   }, [])
 
+  const confirmDelete = useCallback(() => {
+    setDeleteConfirmOpen(false)
+    onDelete?.()
+  }, [onDelete])
+
   if (!videoSrc) return null
 
   return (
@@ -211,7 +219,31 @@ export default function VideoPlayer({
         video={video}
         onCommentsOpen={() => setCommentsOpen(true)}
         onSettingsOpen={() => setSettingsOpen(true)}
+        onDelete={() => setDeleteConfirmOpen(true)}
       />
+
+      {deleteConfirmOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-zinc-900 rounded-2xl p-6 mx-8 max-w-xs w-full">
+            <p className="text-white text-sm font-medium mb-1">Delete this video?</p>
+            <p className="text-white/60 text-xs mb-5">This will permanently remove the video and all related data.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="flex-1 py-2 rounded-lg bg-zinc-700 text-white text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CommentsPanel
         videoId={video.id}

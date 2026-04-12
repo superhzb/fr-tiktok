@@ -52,6 +52,19 @@ export interface SubtitleCue {
   zh: string
 }
 
+export interface WatchProgress {
+  video_id: string
+  play_percentage: number
+  loop_count: number
+  seen: boolean
+  saved_position: number
+  updated_at: string | null
+}
+
+export interface FeedVideo extends Video {
+  watch_progress: WatchProgress | null
+}
+
 /** Saved to IndexedDB — survives app restarts */
 export interface VideoPlayStats {
   videoId: string
