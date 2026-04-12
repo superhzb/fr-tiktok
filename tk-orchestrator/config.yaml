@@ -1,8 +1,8 @@
-poll_interval_seconds: 60
+poll_interval_seconds: 600
 output_dir: ./output
 videos_per_poll: 1
 max_videos_per_channel: 10
-max_videos_total: 200
+max_videos_total: 100
 comment_count: 10
 stt_model: mlx-community/whisper-large-v3-asr-4bit
 aligner_model: mlx-community/Qwen3-ForcedAligner-0.6B-8bit
