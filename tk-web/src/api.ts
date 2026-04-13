@@ -5,14 +5,27 @@ const BASE =
 export const fileUrl = (path: string | null) =>
   path ? `${BASE}${path}` : null
 
+interface FetchFeedOptions {
+  limit?: number
+  offset?: number
+}
+
 export async function fetchVideos(): Promise<import('./types').Video[]> {
   const res = await fetch(`${BASE}/videos?status=completed`)
   if (!res.ok) throw new Error('Failed to fetch videos')
   return res.json()
 }
 
-export async function fetchFeed(): Promise<import('./types').FeedVideo[]> {
-  const res = await fetch(`${BASE}/feed`)
+export async function fetchFeed(
+  options: FetchFeedOptions = {}
+): Promise<import('./types').FeedVideo[]> {
+  const params = new URLSearchParams()
+  if (options.limit !== undefined) params.set('limit', String(options.limit))
+  if (options.offset !== undefined && options.offset > 0) {
+    params.set('offset', String(options.offset))
+  }
+  const query = params.toString()
+  const res = await fetch(`${BASE}/feed${query ? `?${query}` : ''}`)
   if (!res.ok) throw new Error('Failed to fetch feed')
   return res.json()
 }

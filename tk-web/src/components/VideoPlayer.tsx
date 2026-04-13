@@ -15,6 +15,8 @@ interface Props {
   onPlayProgress?: (videoId: string, currentTime: number, duration: number) => void
   onLoopComplete?: (videoId: string) => void
   onDelete?: () => void
+  shouldLoadVideo: boolean
+  shouldLoadSubtitles: boolean
 }
 
 export default function VideoPlayer({
@@ -24,14 +26,18 @@ export default function VideoPlayer({
   onPlayProgress,
   onLoopComplete,
   onDelete,
+  shouldLoadVideo,
+  shouldLoadSubtitles,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [isReadyToPlay, setIsReadyToPlay] = useState(false)
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [paused, setPaused] = useState(false)
+  const [paused, setPaused] = useState(true)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -40,18 +46,40 @@ export default function VideoPlayer({
   const hasReportedLoop = useRef(false)
   const lastReportedSecond = useRef(-1)
 
-  const videoSrc = fileUrl(video.files.video_url) ?? ''
+  const videoSrc = shouldLoadVideo ? (fileUrl(video.files.video_url) ?? '') : ''
 
   const vttSrc = fileUrl(video.files.vtt_url)
-  const cues = useVtt(vttSrc)
+  const cues = useVtt(shouldLoadSubtitles ? vttSrc : null)
 
   useWakeLock(videoRef)
 
   useEffect(() => {
     const el = videoRef.current
+    if (!el || (active && videoSrc)) return
+
+    el.pause()
+    el.removeAttribute('src')
+    el.load()
+    setCurrentTime(0)
+    setDuration(0)
+    setIsReadyToPlay(false)
+    setShowLoadingOverlay(false)
+    setPaused(true)
+  }, [active, videoSrc])
+
+  useEffect(() => {
+    const el = videoRef.current
     if (!el) return
 
-    if (active) {
+    const markReadyIfBuffered = () => {
+      if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        setIsReadyToPlay(true)
+      }
+    }
+
+    if (active && videoSrc) {
+      markReadyIfBuffered()
+
       const direction = sessionState?.direction ?? 'forward'
       const savedPos = sessionState?.savedPosition ?? 0
       const dur = el.duration || 0
@@ -67,15 +95,35 @@ export default function VideoPlayer({
         el.currentTime = 0
       }
 
-      el.play().catch(() => {})
-      setPaused(false)
+      setPaused(true)
 
       hasReportedLoop.current = false
       lastReportedSecond.current = -1
     } else {
       el.pause()
     }
-  }, [active, sessionState])
+  }, [active, sessionState, videoSrc])
+
+  useEffect(() => {
+    setIsReadyToPlay(false)
+    setShowLoadingOverlay(false)
+    setPaused(true)
+  }, [video.id, videoSrc])
+
+  useEffect(() => {
+    if (!active || !videoSrc || isReadyToPlay) {
+      setShowLoadingOverlay(false)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowLoadingOverlay(true)
+    }, 350)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [active, isReadyToPlay, videoSrc])
 
   const handleTimeUpdate = useCallback(() => {
     const el = videoRef.current
@@ -107,6 +155,15 @@ export default function VideoPlayer({
 
   const handleLoadedMetadata = useCallback(() => {
     setDuration(videoRef.current?.duration ?? 0)
+  }, [])
+
+  const handleCanPlay = useCallback(() => {
+    setIsReadyToPlay(true)
+  }, [])
+
+  const handlePlaying = useCallback(() => {
+    setIsReadyToPlay(true)
+    setPaused(false)
   }, [])
 
   const seekToPosition = useCallback((clientX: number) => {
@@ -157,8 +214,15 @@ export default function VideoPlayer({
     const el = videoRef.current
     if (!el) return
     if (el.paused) {
-      el.play().catch(() => {})
-      setPaused(false)
+      el.muted = false
+      el.play()
+        .then(() => {
+          setPaused(false)
+          setIsReadyToPlay(true)
+        })
+        .catch(() => {
+          setPaused(true)
+        })
     } else {
       el.pause()
       setPaused(true)
@@ -185,14 +249,26 @@ export default function VideoPlayer({
         loop
         playsInline
         muted={false}
+        preload={active ? 'auto' : 'metadata'}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        onCanPlay={handleCanPlay}
+        onPlaying={handlePlaying}
         onClick={togglePlay}
       />
 
+      {active && showLoadingOverlay && !isReadyToPlay && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black">
+          <div className="flex flex-col items-center gap-3 text-white/80">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+            <p className="text-xs tracking-[0.18em] uppercase">Loading video</p>
+          </div>
+        </div>
+      )}
+
       {paused && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-16 h-16 rounded-full bg-black/40 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
+          <div className="w-16 h-16 rounded-full bg-black/50 flex items-center justify-center">
             <span className="text-white text-3xl">&#9654;</span>
           </div>
         </div>

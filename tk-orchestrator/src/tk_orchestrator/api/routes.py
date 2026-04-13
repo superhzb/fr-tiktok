@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, StringConstraints, field_validator
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
 
 from ..config import Config
 from ..models import (
@@ -168,9 +169,9 @@ def _video_files(v: Video) -> dict:
     result: dict = {"video_url": None, "vtt_url": None, "srt_url": None}
     if not video_dir.is_dir():
         return result
-    mp4s = list(video_dir.glob("*.mp4"))
-    if mp4s:
-        result["video_url"] = f"/output/{channel_username}/{v.id}/{mp4s[0].name}"
+    mp4 = next(video_dir.glob("*.mp4"), None)
+    if mp4:
+        result["video_url"] = f"/output/{channel_username}/{v.id}/{mp4.name}"
     vtt = video_dir / "subtitles.vtt"
     if vtt.exists():
         result["vtt_url"] = f"/output/{channel_username}/{v.id}/subtitles.vtt"
@@ -302,7 +303,10 @@ async def get_job(job_id: int):
 
 
 @app.get("/feed")
-async def feed():
+async def feed(
+    limit: Annotated[int | None, Query(ge=1, le=100)] = None,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
     with get_session() as s:
         completed_video_ids = (
             s.query(Job.video_id)
@@ -313,6 +317,7 @@ async def feed():
 
         videos = (
             s.query(Video, WatchProgress)
+            .options(joinedload(Video.channel))
             .filter(Video.id.in_(s.query(completed_video_ids.c.video_id)))
             .outerjoin(WatchProgress, Video.id == WatchProgress.video_id)
             .all()
@@ -359,6 +364,10 @@ async def feed():
                 return (tier, loops)
 
         result.sort(key=feed_sort_key)
+        if offset:
+            result = result[offset:]
+        if limit is not None:
+            result = result[:limit]
         return result
 
 

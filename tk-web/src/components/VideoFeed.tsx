@@ -58,6 +58,8 @@ export default function VideoFeed() {
               onPlayProgress={updatePlayProgress}
               onLoopComplete={markLoopCompleted}
               onDelete={() => deleteVideo(video.id)}
+              shouldLoadVideo={i === activeIndex}
+              shouldLoadSubtitles={Math.abs(i - activeIndex) === 0}
             />
           </div>
         ))}
