@@ -1,9 +1,7 @@
-const BASE =
-  import.meta.env.VITE_API_BASE ??
-  `${window.location.protocol}//${window.location.hostname}:8000`
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
 
 export const fileUrl = (path: string | null) =>
-  path ? `${BASE}${path}` : null
+  path ? path : null
 
 interface FetchFeedOptions {
   limit?: number
@@ -11,7 +9,7 @@ interface FetchFeedOptions {
 }
 
 export async function fetchVideos(): Promise<import('./types').Video[]> {
-  const res = await fetch(`${BASE}/videos?status=completed`)
+  const res = await fetch(`${API_BASE}/videos?status=completed`)
   if (!res.ok) throw new Error('Failed to fetch videos')
   return res.json()
 }
@@ -25,7 +23,7 @@ export async function fetchFeed(
     params.set('offset', String(options.offset))
   }
   const query = params.toString()
-  const res = await fetch(`${BASE}/feed${query ? `?${query}` : ''}`)
+  const res = await fetch(`${API_BASE}/feed${query ? `?${query}` : ''}`)
   if (!res.ok) throw new Error('Failed to fetch feed')
   return res.json()
 }
@@ -39,7 +37,7 @@ export async function syncProgress(
     saved_position: number
   }
 ): Promise<void> {
-  const res = await fetch(`${BASE}/videos/${videoId}/progress`, {
+  const res = await fetch(`${API_BASE}/videos/${videoId}/progress`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(progress),
@@ -48,12 +46,12 @@ export async function syncProgress(
 }
 
 export async function deleteVideo(videoId: string): Promise<void> {
-  const res = await fetch(`${BASE}/videos/${videoId}`, { method: 'DELETE' })
+  const res = await fetch(`${API_BASE}/videos/${videoId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error('Failed to delete video')
 }
 
 export async function fetchComments(videoId: string): Promise<import('./types').Comment[]> {
-  const res = await fetch(`${BASE}/videos/${videoId}/comments`)
+  const res = await fetch(`${API_BASE}/videos/${videoId}/comments`)
   if (!res.ok) throw new Error('Failed to fetch comments')
   return res.json()
 }
