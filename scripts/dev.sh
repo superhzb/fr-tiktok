@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API_HOST="${API_HOST:-0.0.0.0}"
 API_PORT="${API_PORT:-8000}"
 WEB_HOST="${WEB_HOST:-0.0.0.0}"
-WEB_PORT="${WEB_PORT:-5173}"
+WEB_PORT="${WEB_PORT:-8001}"
 REFRESH_MODE="${REFRESH_MODE:-on}"
 
 case "${1:-}" in

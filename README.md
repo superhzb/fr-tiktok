@@ -30,11 +30,11 @@ To run backend and frontend together from the repo root:
 ./scripts/dev.sh
 ```
 
-This binds the API to `0.0.0.0:8000` and the Vite frontend to `0.0.0.0:5173`, so you can open the app from:
+This binds the API to `0.0.0.0:8000` and the Vite frontend to `0.0.0.0:8001`, so you can open the app from:
 
-- this machine: `http://127.0.0.1:5173`
-- your LAN: `http://<your-lan-ip>:5173`
-- Tailscale by IP: `http://<your-tailscale-ip>:5173`
+- this machine: `http://127.0.0.1:8001`
+- your LAN: `http://<your-lan-ip>:8001`
+- Tailscale by IP: `http://<your-tailscale-ip>:8001`
 
 If you want to use a Tailscale MagicDNS hostname instead of the Tailscale IP, allow it explicitly before starting:
 
