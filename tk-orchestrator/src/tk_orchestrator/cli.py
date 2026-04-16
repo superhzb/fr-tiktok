@@ -334,10 +334,22 @@ def job_detail(ctx: click.Context, job_id: int) -> None:
 @main.command("start")
 @click.option("--host", default="0.0.0.0", show_default=True, help="API server host")
 @click.option("--port", default=8000, show_default=True, help="API server port")
+@click.option(
+    "--refresh/--no-refresh",
+    default=None,
+    help="Enable or disable channel polling, retention, and background processing.",
+)
 @click.pass_context
-def start(ctx: click.Context, host: str, port: int) -> None:
+def start(
+    ctx: click.Context,
+    host: str,
+    port: int,
+    refresh: bool | None,
+) -> None:
     """Start the scheduler, queue worker, and API server."""
     config = _bootstrap(ctx.obj.get("config_path"))
+    if refresh is not None:
+        config.refresh_enabled = refresh
     asyncio.run(_start_async(config, host, port))
 
 
@@ -351,8 +363,6 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     configure(config)
     seeded_channels = _seed_default_channels(config)
     recovered_jobs = recover_interrupted_jobs()
-    scheduler = setup_scheduler(config)
-    scheduler.start()
 
     uv_config = uvicorn.Config(
         app, host=host, port=port, loop="none", log_level="warning"
@@ -360,11 +370,19 @@ async def _start_async(config: Config, host: str, port: int) -> None:
     server = uvicorn.Server(uv_config)
 
     click.echo(f"tk-orchestrator started  (API: http://{host}:{port})")
+    click.echo(
+        "Refresh mode: on"
+        if config.refresh_enabled
+        else "Refresh mode: off (no polling, retention, or background processing)"
+    )
     if seeded_channels:
         click.echo(f"Seeded {seeded_channels} default channel(s).")
     if recovered_jobs:
         click.echo(f"Recovered {len(recovered_jobs)} interrupted job(s).")
-    await asyncio.gather(
-        worker(config),
-        server.serve(),
-    )
+    if not config.refresh_enabled:
+        await server.serve()
+        return
+
+    scheduler = setup_scheduler(config)
+    scheduler.start()
+    await asyncio.gather(worker(config), server.serve())

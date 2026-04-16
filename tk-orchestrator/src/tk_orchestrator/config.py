@@ -21,6 +21,7 @@ def _parse_bool(val: str) -> bool:
 _ENV_MAP: dict[str, tuple[str, type]] = {
     "TK_POLL_INTERVAL_SECONDS": ("poll_interval_seconds", int),
     "TK_OUTPUT_DIR": ("output_dir", Path),
+    "TK_REFRESH_ENABLED": ("refresh_enabled", _parse_bool),
     "TK_VIDEOS_PER_POLL": ("videos_per_poll", int),
     "TK_MAX_VIDEOS_PER_CHANNEL": ("max_videos_per_channel", int),
     "TK_MAX_VIDEOS_TOTAL": ("max_videos_total", int),
@@ -51,6 +52,7 @@ _ENV_MAP: dict[str, tuple[str, type]] = {
 class Config:
     poll_interval_seconds: int = 60
     output_dir: Path = dataclasses.field(default_factory=lambda: Path("./output"))
+    refresh_enabled: bool = True
     videos_per_poll: int = 1
     max_videos_per_channel: int = 20
     max_videos_total: int = 200

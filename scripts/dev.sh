@@ -7,6 +7,31 @@ API_HOST="${API_HOST:-0.0.0.0}"
 API_PORT="${API_PORT:-8000}"
 WEB_HOST="${WEB_HOST:-0.0.0.0}"
 WEB_PORT="${WEB_PORT:-5173}"
+REFRESH_MODE="${REFRESH_MODE:-on}"
+
+case "${1:-}" in
+  --refresh)
+    REFRESH_MODE="on"
+    ;;
+  --no-refresh)
+    REFRESH_MODE="off"
+    ;;
+  "")
+    ;;
+  *)
+    echo "Usage: $0 [--refresh|--no-refresh]" >&2
+    exit 1
+    ;;
+esac
+
+if [[ "$REFRESH_MODE" == "on" ]]; then
+  ORCH_REFRESH_FLAG="--refresh"
+elif [[ "$REFRESH_MODE" == "off" ]]; then
+  ORCH_REFRESH_FLAG="--no-refresh"
+else
+  echo "REFRESH_MODE must be 'on' or 'off'" >&2
+  exit 1
+fi
 
 cd "$ROOT_DIR"
 
@@ -24,7 +49,7 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-uv run --package tk-orchestrator tk-orch start --host "$API_HOST" --port "$API_PORT" &
+uv run --package tk-orchestrator tk-orch start --host "$API_HOST" --port "$API_PORT" "$ORCH_REFRESH_FLAG" &
 API_PID=$!
 
 (
@@ -35,6 +60,7 @@ WEB_PID=$!
 
 echo "Backend:  http://$API_HOST:$API_PORT"
 echo "Frontend: http://$WEB_HOST:$WEB_PORT"
+echo "Refresh:  $REFRESH_MODE"
 echo "LAN/Tailscale: use this machine's LAN IP or Tailscale IP on port $WEB_PORT"
 echo "If using a Tailscale hostname, set VITE_ALLOWED_HOSTS before starting."
 

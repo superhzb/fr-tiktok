@@ -1,5 +1,6 @@
 poll_interval_seconds: 60
 output_dir: ./output
+refresh_enabled: true
 videos_per_poll: 1
 max_videos_per_channel: 20
 max_videos_total: 200

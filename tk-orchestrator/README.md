@@ -13,14 +13,18 @@ uv pip install -e .
 cp config.example.yaml config.yaml
 
 # Start everything (API + scheduler + worker)
-tk-orch start
+tk-orch start --refresh
+
+# Start in frozen library mode (API only; no polling/deletes/downloads)
+tk-orch start --no-refresh
 # API at http://localhost:8000
 ```
 
 ## CLI Commands
 
 ```bash
-tk-orch start                       # start API server + scheduler + worker
+tk-orch start --refresh             # start API server + scheduler + worker
+tk-orch start --no-refresh          # start API only, keep current library fixed
 tk-orch channel add <url>           # monitor a TikTok channel
 tk-orch channel list                # list monitored channels
 tk-orch channel remove <username>   # stop monitoring
@@ -61,6 +65,11 @@ if interrupted, the worker resumes from the last completed step.
 
 See [`config.example.yaml`](config.example.yaml). All fields can be overridden
 with environment variables (`TK_POLL_INTERVAL_SECONDS`, `TK_OUTPUT_DIR`, etc.).
+
+`refresh_enabled` controls whether automatic channel polling, retention
+deletes, and background pipeline processing are enabled by default. You can
+override it at startup with `tk-orch start --refresh` or `tk-orch start
+--no-refresh`.
 
 ## Project Structure
 

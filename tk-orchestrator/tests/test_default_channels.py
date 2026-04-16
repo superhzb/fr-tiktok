@@ -16,6 +16,7 @@ class ConfigDiscoveryTests(unittest.TestCase):
                 "\n".join(
                     [
                         "poll_interval_seconds: 15",
+                        "refresh_enabled: false",
                         "default_channels:",
                         '  - "@creator.test"',
                         '  - "https://www.tiktok.com/@bonjour.lemonde"',
@@ -27,6 +28,7 @@ class ConfigDiscoveryTests(unittest.TestCase):
             config = load_config(config_path)
 
             self.assertEqual(config.poll_interval_seconds, 15)
+            self.assertEqual(config.refresh_enabled, False)
             self.assertEqual(
                 config.default_channels,
                 ["@creator.test", "https://www.tiktok.com/@bonjour.lemonde"],
