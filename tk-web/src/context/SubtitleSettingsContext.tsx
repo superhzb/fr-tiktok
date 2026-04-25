@@ -8,7 +8,7 @@ interface SubtitleSettingsContextValue {
 }
 
 export const DEFAULT_SUBTITLE_SETTINGS: SubtitleSettings = {
-  position: 4,
+  position: 2,
   fontSize: 1,
   mode: 'both',
 }

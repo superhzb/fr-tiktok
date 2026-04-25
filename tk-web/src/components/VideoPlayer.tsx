@@ -267,7 +267,7 @@ export default function VideoPlayer({
       )}
 
       {paused && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-16 h-16 rounded-full bg-black/50 flex items-center justify-center">
             <span className="text-white text-3xl">&#9654;</span>
           </div>

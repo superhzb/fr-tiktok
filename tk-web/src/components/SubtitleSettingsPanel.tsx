@@ -13,11 +13,7 @@ const FONT_SIZES: { label: string; value: SubtitleFontSize; fontSize: number }[]
   { label: 'A', value: 2, fontSize: 34 },
 ]
 
-const MODES: { label: string; value: SubtitleMode }[] = [
-  { label: 'FR', value: 'fr' },
-  { label: 'FR + 中', value: 'both' },
-  { label: '中文', value: 'zh' },
-]
+const MODES: SubtitleMode[] = ['fr', 'both', 'zh']
 
 function PositionSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -88,6 +84,7 @@ export default function SubtitleSettingsPanel({ open, onClose }: Props) {
   const { settings, setSettings } = useSubtitleSettings()
   // Slider: 0=left=bottom(pos4), 4=right=top(pos0)
   const sliderValue = 4 - settings.position
+  const modeIndex = MODES.indexOf(settings.mode)
 
   return (
     <div
@@ -109,21 +106,23 @@ export default function SubtitleSettingsPanel({ open, onClose }: Props) {
         {/* Language */}
         <div className="mb-4">
           <p className="text-white/60 text-xs mb-2 uppercase tracking-wide">Language</p>
-          <div className="flex gap-2">
-            {MODES.map(m => (
-              <button
-                key={m.value}
-                onClick={() => setSettings({ ...settings, mode: m.value })}
-                className={`flex-1 h-9 rounded-lg text-xs font-semibold transition-colors ${
-                  settings.mode === m.value
-                    ? 'bg-white text-black'
-                    : 'bg-white/15 text-white/70'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            aria-label={`Subtitle language mode ${modeIndex + 1} of ${MODES.length}`}
+            onClick={() => setSettings({ ...settings, mode: MODES[(modeIndex + 1) % MODES.length] })}
+            className="flex h-9 w-16 items-center justify-center gap-2 rounded-full bg-white/15 transition-colors"
+          >
+            <span
+              className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                settings.mode === 'zh' ? 'bg-white/30' : 'bg-white'
+              }`}
+            />
+            <span
+              className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                settings.mode === 'fr' ? 'bg-white/30' : 'bg-yellow-300'
+              }`}
+            />
+          </button>
         </div>
 
         {/* Position */}
