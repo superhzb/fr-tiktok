@@ -123,7 +123,7 @@ async def health_check():
 This is the primary endpoint the frontend calls on app start. It returns
 completed videos ordered by the smart feed algorithm:
 
-- **Tier 1 (Unwatched)**: `play_percentage = 0` or no watch progress. Ordered by `discovered_at DESC` (newest first).
+- **Tier 1 (Unwatched)**: `play_percentage = 0` or no watch progress. Ordered by `discovered_at ASC` (oldest first).
 - **Tier 2 (Started)**: `loop_count = 0` AND `play_percentage > 0`. Ordered by `play_percentage ASC` (least watched first).
 - **Tier 3 (Completed)**: `loop_count >= 1`. Ordered by `loop_count ASC` (least rewatched first).
 

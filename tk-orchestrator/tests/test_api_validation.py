@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -70,6 +71,45 @@ class ApiValidationTests(unittest.TestCase):
                 "service": "tk-orchestrator",
                 "database": {"status": "ok"},
             },
+        )
+
+    def test_feed_orders_unwatched_videos_oldest_first(self) -> None:
+        now = datetime.now(timezone.utc)
+        with get_session() as session:
+            channel = Channel(
+                username="feed.test", url="https://www.tiktok.com/@feed.test"
+            )
+            session.add(channel)
+            session.flush()
+
+            old_video = Video(
+                id="7351234567890123401",
+                channel_id=channel.id,
+                url="https://www.tiktok.com/@feed.test/video/7351234567890123401",
+                author="feed.test",
+                discovered_at=now - timedelta(days=2),
+            )
+            new_video = Video(
+                id="7351234567890123402",
+                channel_id=channel.id,
+                url="https://www.tiktok.com/@feed.test/video/7351234567890123402",
+                author="feed.test",
+                discovered_at=now - timedelta(days=1),
+            )
+            session.add_all([new_video, old_video])
+            session.add_all(
+                [
+                    Job(video_id=old_video.id, status="completed"),
+                    Job(video_id=new_video.id, status="completed"),
+                ]
+            )
+
+        response = self.client.get("/feed")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [video["id"] for video in response.json()],
+            ["7351234567890123401", "7351234567890123402"],
         )
 
 

@@ -357,7 +357,7 @@ async def feed(
             if tier == 0:
                 da = item.get("discovered_at")
                 ts = datetime.fromisoformat(da).timestamp() if da else 0
-                return (tier, -ts)
+                return (tier, ts)
             elif tier == 1:
                 return (tier, pct)
             else:

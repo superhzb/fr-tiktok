@@ -22,7 +22,7 @@ How tk-web should consume the updated tk-orchestrator API.
 **Replaces**: `GET /videos?status=completed` as the primary data source.
 
 Returns completed videos already sorted by the smart feed algorithm:
-1. **Unwatched** (no progress or `play_percentage = 0`) — newest first
+1. **Unwatched** (no progress or `play_percentage = 0`) — oldest first
 2. **Started** (`loop_count = 0`, `play_percentage > 0`) — least watched first
 3. **Completed** (`loop_count >= 1`) — least rewatched first
 
