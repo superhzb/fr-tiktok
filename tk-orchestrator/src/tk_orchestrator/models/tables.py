@@ -63,6 +63,16 @@ class Video(Base):
     )
 
 
+class DeletedVideo(Base):
+    __tablename__ = "deleted_videos"
+
+    video_id = Column(String, primary_key=True)
+    channel_id = Column(Integer, ForeignKey("channels.id"), nullable=True)
+    channel_username = Column(String, nullable=True)
+    reason = Column(String, nullable=False, default="deleted")
+    deleted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class Comment(Base):
     __tablename__ = "comments"
 

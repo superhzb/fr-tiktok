@@ -7,13 +7,16 @@ import pytest
 from tk_orchestrator.config import Config
 from tk_orchestrator.models import (
     Channel,
+    DeletedVideo,
     Job,
     Video,
     WatchProgress,
     get_session,
     init_db,
 )
+from tk_orchestrator.scheduler import polling
 from tk_orchestrator.scheduler.polling import (
+    _find_new_videos,
     _run_retention_if_needed,
     _select_retention_candidates,
     _total_video_count,
@@ -117,10 +120,36 @@ class TestDeleteVideoAndFiles:
         assert not video_dir.exists()
         with get_session() as s:
             assert s.get(Video, "100") is None
+            deleted = s.get(DeletedVideo, "100")
+            assert deleted is not None
+            assert deleted.channel_username == channel_username
 
     def test_returns_false_for_missing(self, tmp_env):
         config, output_dir = tmp_env
         assert delete_video_and_files("nonexistent", output_dir) is False
+
+    async def test_poll_scanner_skips_deleted_video_ids(self, tmp_env, monkeypatch):
+        config, output_dir = tmp_env
+        config.videos_per_poll = 1
+        with get_session() as s:
+            ch = _make_channel(s)
+            _make_video(s, "100", ch)
+
+        assert delete_video_and_files("100", output_dir)
+
+        async def fake_channel_checker(channel_url, count):
+            return [
+                {"id": "100", "url": "https://example.test/deleted"},
+                {"id": "101", "url": "https://example.test/new"},
+            ]
+
+        monkeypatch.setattr(
+            polling, "_run_channel_checker_count", fake_channel_checker
+        )
+
+        videos = await _find_new_videos("https://example.test/@testuser", config)
+
+        assert [video["id"] for video in videos] == ["101"]
 
 
 class TestRetentionMetrics:

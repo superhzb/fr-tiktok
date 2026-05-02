@@ -11,7 +11,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import or_
 
 from ..config import Config
-from ..models import Channel, Comment, Job, Video, WatchProgress, get_session
+from ..models import (
+    Channel,
+    Comment,
+    DeletedVideo,
+    Job,
+    Video,
+    WatchProgress,
+    get_session,
+)
 from ..video_retention import delete_video_and_files
 from .subprocess import run_cli
 
@@ -44,6 +52,11 @@ async def _run_channel_checker_count(channel_url: str, count: int) -> list[dict]
 def _video_exists(video_id: str) -> bool:
     with get_session() as s:
         return s.get(Video, video_id) is not None
+
+
+def _video_is_deleted(video_id: str) -> bool:
+    with get_session() as s:
+        return s.get(DeletedVideo, video_id) is not None
 
 
 def _channel_video_count(channel_id: int) -> int:
@@ -202,7 +215,7 @@ async def _find_new_videos(channel_url: str, config: Config) -> list[dict]:
             if video_id in seen_ids:
                 continue
             seen_ids.add(video_id)
-            if not _video_exists(video_id):
+            if not _video_exists(video_id) and not _video_is_deleted(video_id):
                 discovered_new_videos.append(video)
                 if len(discovered_new_videos) >= target_new_videos:
                     return discovered_new_videos
@@ -332,11 +345,14 @@ async def poll_channel(
 
         with get_session() as s:
             existing = s.get(Video, v["id"])
+            deleted = s.get(DeletedVideo, v["id"])
             if existing:
                 existing.views = v.get("views")
                 existing.likes = v.get("likes")
                 existing.comments_count = v.get("comments")
                 existing.shares = v.get("shares")
+            elif deleted:
+                logger.info("Skipping deleted video %s (@%s)", v["id"], username)
             else:
                 if channel_video_total >= per_channel_limit:
                     logger.info(

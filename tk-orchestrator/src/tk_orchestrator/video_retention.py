@@ -4,7 +4,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from .models import Video, get_session
+from .models import DeletedVideo, Video, get_session
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +15,18 @@ def delete_video_and_files(video_id: str, output_dir: Path) -> bool:
         if v is None:
             return False
         channel_username = v.channel.username if v.channel else v.author
+        deleted = s.get(DeletedVideo, video_id)
+        if deleted is None:
+            s.add(
+                DeletedVideo(
+                    video_id=video_id,
+                    channel_id=v.channel_id,
+                    channel_username=channel_username,
+                )
+            )
+        else:
+            deleted.channel_id = v.channel_id
+            deleted.channel_username = channel_username
         s.delete(v)
 
     if channel_username:
