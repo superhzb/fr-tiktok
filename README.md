@@ -36,6 +36,12 @@ This binds the API to `0.0.0.0:8000` and the Vite frontend to `0.0.0.0:8001`, so
 - your LAN: `http://<your-lan-ip>:8001`
 - Tailscale by IP: `http://<your-tailscale-ip>:8001`
 
+To use custom ports:
+
+```bash
+./scripts/dev.sh --api-port 8000 --web-port 8001
+```
+
 If you want to use a Tailscale MagicDNS hostname instead of the Tailscale IP, allow it explicitly before starting:
 
 ```bash

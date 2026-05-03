@@ -9,20 +9,70 @@ WEB_HOST="${WEB_HOST:-0.0.0.0}"
 WEB_PORT="${WEB_PORT:-8001}"
 REFRESH_MODE="${REFRESH_MODE:-on}"
 
-case "${1:-}" in
-  --refresh)
-    REFRESH_MODE="on"
-    ;;
-  --no-refresh)
-    REFRESH_MODE="off"
-    ;;
-  "")
-    ;;
-  *)
-    echo "Usage: $0 [--refresh|--no-refresh]" >&2
+usage() {
+  cat >&2 <<EOF
+Usage: $0 [--refresh|--no-refresh] [--api-host HOST] [--api-port PORT] [--web-host HOST] [--web-port PORT]
+
+Environment defaults:
+  API_HOST=$API_HOST
+  API_PORT=$API_PORT
+  WEB_HOST=$WEB_HOST
+  WEB_PORT=$WEB_PORT
+  REFRESH_MODE=$REFRESH_MODE
+EOF
+}
+
+require_value() {
+  local flag="$1"
+  local value="${2:-}"
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "$flag requires a value" >&2
+    usage
     exit 1
-    ;;
-esac
+  fi
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --refresh)
+      REFRESH_MODE="on"
+      shift
+      ;;
+    --no-refresh)
+      REFRESH_MODE="off"
+      shift
+      ;;
+    --api-host)
+      require_value "$1" "${2:-}"
+      API_HOST="$2"
+      shift 2
+      ;;
+    --api-port)
+      require_value "$1" "${2:-}"
+      API_PORT="$2"
+      shift 2
+      ;;
+    --web-host)
+      require_value "$1" "${2:-}"
+      WEB_HOST="$2"
+      shift 2
+      ;;
+    --web-port)
+      require_value "$1" "${2:-}"
+      WEB_PORT="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
 
 if [[ "$REFRESH_MODE" == "on" ]]; then
   ORCH_REFRESH_FLAG="--refresh"
@@ -31,6 +81,11 @@ elif [[ "$REFRESH_MODE" == "off" ]]; then
 else
   echo "REFRESH_MODE must be 'on' or 'off'" >&2
   exit 1
+fi
+
+API_PROXY_HOST="$API_HOST"
+if [[ "$API_PROXY_HOST" == "0.0.0.0" || "$API_PROXY_HOST" == "::" ]]; then
+  API_PROXY_HOST="127.0.0.1"
 fi
 
 cd "$ROOT_DIR"
@@ -54,7 +109,7 @@ API_PID=$!
 
 (
   cd "$ROOT_DIR/tk-web"
-  npm run dev -- --host "$WEB_HOST" --port "$WEB_PORT" --strictPort
+  VITE_API_TARGET="http://$API_PROXY_HOST:$API_PORT" npm run dev -- --host "$WEB_HOST" --port "$WEB_PORT" --strictPort
 ) &
 WEB_PID=$!
 

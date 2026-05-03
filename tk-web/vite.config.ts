@@ -10,6 +10,7 @@ const allowedHosts = Array.from(
       .filter(Boolean)
   ])
 )
+const apiTarget = process.env.VITE_API_TARGET ?? 'http://localhost:8000'
 
 export default defineConfig({
   plugins: [react()],
@@ -17,8 +18,8 @@ export default defineConfig({
     host: true,
     allowedHosts,
     proxy: {
-      '/api': { target: 'http://localhost:8000', rewrite: path => path.replace(/^\/api/, '') },
-      '/output': 'http://localhost:8000'
+      '/api': { target: apiTarget, rewrite: path => path.replace(/^\/api/, '') },
+      '/output': apiTarget
     }
   },
   preview: {
