@@ -345,9 +345,9 @@ from .api import app, configure
 
 ```bash
 uv run --package tk-orchestrator tk-orch start
-# Hit http://localhost:8000/health
-# Hit http://localhost:8000/videos
-# Hit http://localhost:8000/channels
+# Hit http://localhost:19099/health
+# Hit http://localhost:19099/videos
+# Hit http://localhost:19099/channels
 ```
 
 **Checkpoint**: API works the same, except `/health` no longer reports scheduler
@@ -774,9 +774,9 @@ worker/queue.py ──→ config, models, worker/pipeline    ✓ internal only
 uv run --package tk-orchestrator tk-orch start
 
 # 2. API responds
-curl http://localhost:8000/health
-curl http://localhost:8000/channels
-curl http://localhost:8000/videos
+curl http://localhost:19099/health
+curl http://localhost:19099/channels
+curl http://localhost:19099/videos
 
 # 3. CLI commands work
 uv run --package tk-orchestrator tk-orch channel list

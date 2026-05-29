@@ -378,16 +378,16 @@ SERVER_PID=$!
 sleep 3
 
 echo "=== Health ==="
-curl -sf http://localhost:8000/health | python3 -m json.tool
+curl -sf http://localhost:19099/health | python3 -m json.tool
 
 echo "=== Channels ==="
-curl -sf http://localhost:8000/channels | python3 -m json.tool
+curl -sf http://localhost:19099/channels | python3 -m json.tool
 
 echo "=== Videos ==="
-curl -sf http://localhost:8000/videos | python3 -m json.tool
+curl -sf http://localhost:19099/videos | python3 -m json.tool
 
 echo "=== Jobs ==="
-curl -sf http://localhost:8000/jobs | python3 -m json.tool
+curl -sf http://localhost:19099/jobs | python3 -m json.tool
 
 kill $SERVER_PID
 ```
@@ -400,7 +400,7 @@ SERVER_PID=$!
 sleep 3
 
 echo "=== Feed (should return completed videos with watch_progress field) ==="
-curl -sf http://localhost:8000/feed | python3 -m json.tool
+curl -sf http://localhost:19099/feed | python3 -m json.tool
 
 # The response should be a JSON array. Each item must have a "watch_progress"
 # key (either null or an object with play_percentage, loop_count, etc.)
@@ -416,21 +416,21 @@ SERVER_PID=$!
 sleep 3
 
 # Pick a video_id that exists in your DB (replace VIDEO_ID below)
-VIDEO_ID=$(curl -sf http://localhost:8000/videos | python3 -c "import sys,json; vs=json.load(sys.stdin); print(vs[0]['id'] if vs else '')")
+VIDEO_ID=$(curl -sf http://localhost:19099/videos | python3 -c "import sys,json; vs=json.load(sys.stdin); print(vs[0]['id'] if vs else '')")
 
 if [ -n "$VIDEO_ID" ]; then
     echo "=== PUT progress ==="
-    curl -sf -X PUT "http://localhost:8000/videos/$VIDEO_ID/progress" \
+    curl -sf -X PUT "http://localhost:19099/videos/$VIDEO_ID/progress" \
         -H "Content-Type: application/json" \
         -d '{"play_percentage": 42, "loop_count": 0, "seen": false, "saved_position": 15}' \
         | python3 -m json.tool
 
     echo "=== GET progress (bulk) ==="
-    curl -sf http://localhost:8000/progress | python3 -m json.tool
+    curl -sf http://localhost:19099/progress | python3 -m json.tool
     # Should include an entry for VIDEO_ID with play_percentage=42
 
     echo "=== Feed now reflects progress ==="
-    curl -sf http://localhost:8000/feed | python3 -c "
+    curl -sf http://localhost:19099/feed | python3 -c "
 import sys, json
 feed = json.load(sys.stdin)
 for v in feed:
@@ -452,15 +452,15 @@ uv run --package tk-orchestrator tk-orch start &
 SERVER_PID=$!
 sleep 3
 
-VIDEO_ID=$(curl -sf http://localhost:8000/videos | python3 -c "import sys,json; vs=json.load(sys.stdin); print(vs[0]['id'] if vs else '')")
+VIDEO_ID=$(curl -sf http://localhost:19099/videos | python3 -c "import sys,json; vs=json.load(sys.stdin); print(vs[0]['id'] if vs else '')")
 
 if [ -n "$VIDEO_ID" ]; then
     echo "=== DELETE video ==="
-    curl -sf -X DELETE "http://localhost:8000/videos/$VIDEO_ID" | python3 -m json.tool
+    curl -sf -X DELETE "http://localhost:19099/videos/$VIDEO_ID" | python3 -m json.tool
     # Should return {"status": "deleted", "video_id": "..."}
 
     echo "=== Verify it is gone ==="
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/videos/$VIDEO_ID")
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:19099/videos/$VIDEO_ID")
     [ "$HTTP_CODE" = "404" ] && echo "OK: video is gone" || echo "FAIL: video still exists ($HTTP_CODE)"
 else
     echo "No videos in DB — skip delete test"

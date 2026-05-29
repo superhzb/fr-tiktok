@@ -30,16 +30,16 @@ To run backend and frontend together from the repo root:
 ./scripts/dev.sh
 ```
 
-This binds the API to `0.0.0.0:8000` and the Vite frontend to `0.0.0.0:8001`, so you can open the app from:
+This binds the API to `0.0.0.0:19099` and the Vite frontend to `0.0.0.0:19102`, so you can open the app from:
 
-- this machine: `http://127.0.0.1:8001`
-- your LAN: `http://<your-lan-ip>:8001`
-- Tailscale by IP: `http://<your-tailscale-ip>:8001`
+- this machine: `http://127.0.0.1:19102`
+- your LAN: `http://<your-lan-ip>:19102`
+- Tailscale by IP: `http://<your-tailscale-ip>:19102`
 
 To use custom ports:
 
 ```bash
-./scripts/dev.sh --api-port 8000 --web-port 8001
+./scripts/dev.sh --api-port 19099 --web-port 19102
 ```
 
 If you want to use a Tailscale MagicDNS hostname instead of the Tailscale IP, allow it explicitly before starting:

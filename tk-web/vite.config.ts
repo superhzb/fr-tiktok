@@ -10,7 +10,7 @@ const allowedHosts = Array.from(
       .filter(Boolean)
   ])
 )
-const apiTarget = process.env.VITE_API_TARGET ?? 'http://localhost:8000'
+const apiTarget = process.env.VITE_API_TARGET ?? 'http://localhost:19099'
 
 export default defineConfig({
   plugins: [react()],

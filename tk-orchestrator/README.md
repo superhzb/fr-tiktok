@@ -17,7 +17,7 @@ tk-orch start --refresh
 
 # Start in frozen library mode (API only; no polling/deletes/downloads)
 tk-orch start --no-refresh
-# API at http://localhost:8000
+# API at http://localhost:19099
 ```
 
 ## CLI Commands

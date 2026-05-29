@@ -508,9 +508,9 @@ uv run --package tk-orchestrator pytest
 uv run --package tk-orchestrator tk-orch start &
 SERVER_PID=$!
 sleep 3
-curl -sf http://localhost:8000/health | python3 -m json.tool
-curl -sf http://localhost:8000/channels | python3 -m json.tool
-curl -sf http://localhost:8000/videos | python3 -m json.tool
+curl -sf http://localhost:19099/health | python3 -m json.tool
+curl -sf http://localhost:19099/channels | python3 -m json.tool
+curl -sf http://localhost:19099/videos | python3 -m json.tool
 kill $SERVER_PID
 ```
 

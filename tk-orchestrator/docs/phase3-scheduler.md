@@ -383,7 +383,7 @@ SERVER_PID=$!
 sleep 3
 
 # Health check should work
-curl -sf http://localhost:8000/health | python3 -m json.tool
+curl -sf http://localhost:19099/health | python3 -m json.tool
 
 # If you have channels configured, watch the logs for "Polling @..." messages
 # after poll_interval_seconds (default 60s)

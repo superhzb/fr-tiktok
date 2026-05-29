@@ -333,7 +333,7 @@ def job_detail(ctx: click.Context, job_id: int) -> None:
 
 @main.command("start")
 @click.option("--host", default="0.0.0.0", show_default=True, help="API server host")
-@click.option("--port", default=8000, show_default=True, help="API server port")
+@click.option("--port", default=19099, show_default=True, help="API server port")
 @click.option(
     "--refresh/--no-refresh",
     default=None,
