@@ -27,6 +27,13 @@ tests/output/
 # Allow committed fixture files even if they match media patterns above
 !tk-orchestrator/tests/fixtures/**
 
+# Debug / ad-hoc artifacts
+debug_*.py
+debug_*.png
+test_output/
+test_output.*
+*_debug.log
+
 # OS
 .DS_Store
 
