@@ -116,7 +116,9 @@ async def run_cmd(
         return stdout_bytes.decode().strip()
 
 
-async def run_pipeline(job_id: int, config: Config) -> None:
+async def run_pipeline(
+    job_id: int, config: Config, *, prior_status: str | None = None
+) -> None:
     with get_session() as s:
         job = s.get(Job, job_id)
         if job is None:
@@ -125,9 +127,11 @@ async def run_pipeline(job_id: int, config: Config) -> None:
         video_id = job.video_id
         video_url = job.video.url
         channel_username = job.video.channel.username
-        previous_status = job.status
+        # When claimed via the queue, job.status is already 'running'; the
+        # caller passes the pre-claim status so resume detection stays correct.
+        # Direct callers (tests, manual runs) omit it and we read the DB value.
+        previous_status = prior_status if prior_status is not None else job.status
         job_current_step = job.current_step
-        job_status = job.status
         job_video_path = job.video_path
         job_srt_path = job.srt_path
         job_last_completed_step = job.last_completed_step
@@ -144,7 +148,7 @@ async def run_pipeline(job_id: int, config: Config) -> None:
 
     class _JobSnapshot:
         current_step = job_current_step
-        status = job_status
+        status = previous_status
         video_path = job_video_path
         srt_path = job_srt_path
         last_completed_step = job_last_completed_step

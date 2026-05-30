@@ -177,7 +177,7 @@ def channel_check(ctx: click.Context, username: str) -> None:
 
 
 async def _channel_check_async(username: str, config: Config) -> None:
-    from .worker import run_pipeline
+    from .worker import claim_job, run_pipeline
     from .scheduler import poll_channel
 
     with get_session() as s:
@@ -208,7 +208,11 @@ async def _channel_check_async(username: str, config: Config) -> None:
 
     click.echo(f"Found {len(result.job_ids)} new video(s). Running pipeline...")
     for job_id in result.job_ids:
-        await run_pipeline(job_id, config)
+        prior_status = claim_job(job_id)
+        if prior_status is None:
+            click.echo(f"Skipped job {job_id}: already running elsewhere.")
+            continue
+        await run_pipeline(job_id, config, prior_status=prior_status)
 
 
 # ── run commands ──────────────────────────────────────────────────────────────
@@ -227,7 +231,7 @@ def run(ctx: click.Context, target: str) -> None:
 
 
 async def _run_all_async(config: Config) -> None:
-    from .worker import run_pipeline
+    from .worker import claim_job, run_pipeline
 
     with get_session() as s:
         queued = s.query(Job).filter(Job.status.in_(["pending", "interrupted"])).all()
@@ -239,16 +243,24 @@ async def _run_all_async(config: Config) -> None:
 
     click.echo(f"Running {len(job_ids)} pending/interrupted job(s)...")
     for job_id in job_ids:
-        await run_pipeline(job_id, config)
+        prior_status = claim_job(job_id)
+        if prior_status is None:
+            click.echo(f"Skipped job {job_id}: already running elsewhere.")
+            continue
+        await run_pipeline(job_id, config, prior_status=prior_status)
 
 
 async def _run_video_async(url: str, config: Config) -> None:
-    from .worker import run_pipeline
+    from .worker import claim_job, run_pipeline
 
     username, video_id = _parse_tiktok_video_url(url)
     channel_id = _ensure_channel(username)
     job_id = _ensure_job(video_id, channel_id, url)
-    await run_pipeline(job_id, config)
+    prior_status = claim_job(job_id)
+    if prior_status is None:
+        click.echo(f"Job {job_id} is already running elsewhere.")
+        return
+    await run_pipeline(job_id, config, prior_status=prior_status)
 
 
 # ── reset ─────────────────────────────────────────────────────────────────────

@@ -13,14 +13,27 @@ from .tables import Base
 _engine = None
 
 
+def _configure_connection(dbapi_conn, _record) -> None:
+    """Set per-connection SQLite pragmas.
+
+    WAL + a busy timeout let the async worker, scheduler, and threadpool
+    writers share one engine without hitting "database is locked".
+    """
+    cursor = dbapi_conn.cursor()
+    try:
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=5000")
+    finally:
+        cursor.close()
+
+
 def init_db(config: Config) -> None:
     global _engine
     db_url = f"sqlite:///{config.db_path.resolve()}"
     _engine = create_engine(db_url, connect_args={"check_same_thread": False})
 
-    event.listen(
-        _engine, "connect", lambda conn, _: conn.execute("PRAGMA foreign_keys=ON")
-    )
+    event.listen(_engine, "connect", _configure_connection)
 
     Base.metadata.create_all(_engine)
     _run_migrations()

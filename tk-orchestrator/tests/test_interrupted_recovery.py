@@ -213,6 +213,8 @@ class QueueRecoveryTests(unittest.TestCase):
             )
 
         claimable = []
-        while (job_id := _claim_next_job()) is not None:
+        while (claimed := _claim_next_job()) is not None:
+            job_id, prior_status = claimed
             claimable.append(job_id)
+            self.assertEqual(prior_status, "interrupted")
         self.assertEqual(claimable, [running_job_id, interrupted_job_id])
