@@ -33,10 +33,10 @@ def test_stdout_is_valid_json_on_success(tmp_path):
     text_file.write_text('{"text": "bonjour monde"}', encoding="utf-8")
     segments = [{"start": 0.0, "end": 0.5, "text": "bonjour"}]
     with patch("tk_aligner.cli.align", return_value=segments):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio), str(text_file)])
     assert result.exit_code == 0
-    data = json.loads(result.output)
+    data = json.loads(result.stdout)
     assert isinstance(data, list)
     assert data[0]["text"] == "bonjour"
 
@@ -47,10 +47,10 @@ def test_logs_do_not_leak_to_stdout(tmp_path):
     text_file = tmp_path / "text.json"
     text_file.write_text('{"text": "hello"}', encoding="utf-8")
     with patch("tk_aligner.cli.align", return_value=[]):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio), str(text_file), "--debug"])
     assert result.exit_code == 0
-    json.loads(result.output)
+    json.loads(result.stdout)
 
 
 def test_invalid_text_file_error_log_has_service(tmp_path):
@@ -58,7 +58,7 @@ def test_invalid_text_file_error_log_has_service(tmp_path):
     audio.write_bytes(b"fake")
     text_file = tmp_path / "bad.json"
     text_file.write_text("not json", encoding="utf-8")
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(main, [str(audio), str(text_file)])
     assert result.exit_code == 1
     entries = [
@@ -82,7 +82,7 @@ def test_orchestrator_context_appears_in_error_logs(tmp_path, monkeypatch):
     text_file = tmp_path / "text.json"
     text_file.write_text('{"text": "hello"}', encoding="utf-8")
     with patch("tk_aligner.cli.align", side_effect=ValueError("bad alignment")):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio), str(text_file)])
     assert result.exit_code == 1
     entries = [

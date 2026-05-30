@@ -30,10 +30,10 @@ def test_stdout_is_valid_json_on_success(tmp_path):
     audio = tmp_path / "audio.mp3"
     audio.write_bytes(b"fake")
     with patch("tk_stt.cli.transcribe", return_value="bonjour monde"):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio)])
     assert result.exit_code == 0
-    data = json.loads(result.output)
+    data = json.loads(result.stdout)
     assert data == {"text": "bonjour monde"}
 
 
@@ -41,18 +41,18 @@ def test_logs_do_not_leak_to_stdout(tmp_path):
     audio = tmp_path / "audio.mp3"
     audio.write_bytes(b"fake")
     with patch("tk_stt.cli.transcribe", return_value="hello"):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio), "--debug"])
     assert result.exit_code == 0
     # stdout must be parseable JSON with no extra lines
-    json.loads(result.output)
+    json.loads(result.stdout)
 
 
 def test_error_log_is_json_with_service(tmp_path):
     audio = tmp_path / "audio.mp3"
     audio.write_bytes(b"fake")
     with patch("tk_stt.cli.transcribe", side_effect=RuntimeError("model failed")):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio)])
     assert result.exit_code == 1
     error_entries = [
@@ -74,7 +74,7 @@ def test_orchestrator_context_appears_in_error_logs(tmp_path, monkeypatch):
     audio = tmp_path / "audio.mp3"
     audio.write_bytes(b"fake")
     with patch("tk_stt.cli.transcribe", side_effect=RuntimeError("boom")):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, [str(audio)])
     assert result.exit_code == 1
     entries = [

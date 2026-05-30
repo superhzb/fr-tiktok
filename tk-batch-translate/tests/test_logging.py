@@ -32,13 +32,13 @@ def test_srt_success_stdout_is_empty(tmp_path):
     srt_file.write_text("1\n00:00:00,000 --> 00:00:01,000\nBonjour\n", encoding="utf-8")
     out_file = tmp_path / "out.vtt"
     with patch("tk_batch_translate.srt.translator.translate_srt"):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             main,
             ["srt", str(srt_file), "--output", str(out_file), "--format", "vtt"],
         )
     assert result.exit_code == 0
-    assert result.output.strip() == ""
+    assert result.stdout.strip() == ""
 
 
 def test_srt_logs_do_not_leak_to_stdout(tmp_path):
@@ -46,13 +46,13 @@ def test_srt_logs_do_not_leak_to_stdout(tmp_path):
     srt_file.write_text("1\n00:00:00,000 --> 00:00:01,000\nBonjour\n", encoding="utf-8")
     out_file = tmp_path / "out.vtt"
     with patch("tk_batch_translate.srt.translator.translate_srt"):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             main,
             ["srt", str(srt_file), "--output", str(out_file), "--format", "vtt", "-v"],
         )
     assert result.exit_code == 0
-    assert result.output.strip() == ""
+    assert result.stdout.strip() == ""
 
 
 def test_srt_error_log_has_service(tmp_path):
@@ -63,7 +63,7 @@ def test_srt_error_log_has_service(tmp_path):
         "tk_batch_translate.srt.translator.translate_srt",
         side_effect=RuntimeError("model failed"),
     ):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             main,
             ["srt", str(srt_file), "--output", str(out_file), "--format", "vtt", "-v"],
@@ -92,7 +92,7 @@ def test_orchestrator_context_appears_in_error_logs(tmp_path, monkeypatch):
         "tk_batch_translate.srt.translator.translate_srt",
         side_effect=RuntimeError("boom"),
     ):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             main,
             ["srt", str(srt_file), "--output", str(out_file), "--format", "vtt", "-v"],

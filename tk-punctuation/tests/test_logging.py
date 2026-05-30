@@ -30,10 +30,10 @@ def test_stdout_is_valid_json_on_success(tmp_path):
     input_file = tmp_path / "input.json"
     input_file.write_text('{"text": "bonjour monde"}', encoding="utf-8")
     with patch("tk_punctuation.cli.punctuate_text", return_value="Bonjour monde."):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, ["--input-file", str(input_file)])
     assert result.exit_code == 0
-    data = json.loads(result.output)
+    data = json.loads(result.stdout)
     assert "text" in data
 
 
@@ -41,16 +41,16 @@ def test_logs_do_not_leak_to_stdout(tmp_path):
     input_file = tmp_path / "input.json"
     input_file.write_text('{"text": "hello"}', encoding="utf-8")
     with patch("tk_punctuation.cli.punctuate_text", return_value="Hello."):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(main, ["--input-file", str(input_file), "--debug"])
     assert result.exit_code == 0
-    json.loads(result.output)
+    json.loads(result.stdout)
 
 
 def test_invalid_json_error_log_has_service(tmp_path):
     input_file = tmp_path / "bad.json"
     input_file.write_text("not json", encoding="utf-8")
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(main, ["--input-file", str(input_file)])
     assert result.exit_code == 1
     entries = [
@@ -71,7 +71,7 @@ def test_orchestrator_context_appears_in_error_logs(tmp_path, monkeypatch):
 
     input_file = tmp_path / "bad.json"
     input_file.write_text("not json", encoding="utf-8")
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(main, ["--input-file", str(input_file)])
     assert result.exit_code == 1
     entries = [
